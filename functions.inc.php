@@ -5,7 +5,10 @@ function nethcti3_get_config($engine) {
     // Write cti configuration file
     include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
     $nethcti3 = \FreePBX::Nethcti3();
-    /*Write user configuration json*/
+
+    /*
+    *    Write user configuration json
+    */
     try {
         $json = array();
         $users = \FreePBX::create()->Userman->getAllUsers();
@@ -88,14 +91,17 @@ function nethcti3_get_config($engine) {
                 error_log($e->getMessage());
             }
         }
-        // Write configuration file
+
+        // Write users.json configuration file
         $res = $nethcti3->writeCTIConfigurationFile('/users.json',$json);
 
         if ($res === FALSE) {
             throw new Exception('fail to write users config');
         }
 
-        /*Write permissions json*/
+        /*
+        *    Write permissions json
+        */
         $results = getCTIPermissionProfiles(false,true);
         if (!$results) {
             throw new Exception('Empty profile config');
@@ -103,13 +109,15 @@ function nethcti3_get_config($engine) {
         foreach ($results as $r) {
             $out[$r['id']] = $r;
         }
-        // Write configuration file
+        // Write profiles.json configuration file
         $res = $nethcti3->writeCTIConfigurationFile('/profiles.json',$out);
         if ($res === FALSE) {
             throw new Exception('fail to write profiles config');
-    }
+        }
 
-        /* Write cti configuration: trunks, queues */
+        /*
+        *    Write cti configuration in ast_objects.json: trunks, queues
+        */
         $obj = new \stdClass();
         $obj->trunks = $nethcti3->getTrunksConfiguration();
         $obj->queues = $nethcti3->getQueuesConfiguration();
@@ -117,6 +125,9 @@ function nethcti3_get_config($engine) {
         if ($res === FALSE) {
             throw new Exception('fail to write trunks config');
         }
+
+        //Restart CTI
+        system("/usr/bin/sudo /usr/bin/systemctl restart nethcti-server &");
     } catch (Exception $e) {
         error_log($e->getMessage());
     }
