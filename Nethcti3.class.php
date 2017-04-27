@@ -1,39 +1,60 @@
 <?php
 // vim: set ai ts=4 sw=4 ft=php:
 namespace FreePBX\modules;
-/*
- * Class stub for BMO Module class
- * In getActionbar change "modulename" to the display value for the page
- * In getActionbar change extdisplay to align with whatever variable you use to decide if the page is in edit mode.
- *
- */
 
 class Nethcti3 implements \BMO
 {
+    public function install() {
+    }
+    public function uninstall() {
+    }
+    public function backup() {
+    }
+    public function restore($backup) {
+    }
+    public function doConfigPageInit($page) {
+    }
 
-	// Note that the default Constructor comes from BMO/Self_Helper.
-	// You may override it here if you wish. By default every BMO
-	// object, when created, is handed the FreePBX Singleton object.
+    /*Write a CTI configuration file in JSON format*/
+    public function writeCTIConfigurationFile($filename, $obj) {
+    try {
+        // Write configuration file
+            require('/var/www/html/freepbx/rest/config.inc.php');
+        $res = file_put_contents($config['settings']['cti_config_path']. $filename,json_encode($obj, JSON_PRETTY_PRINT));
+    } catch (Exception $e) {
+        error_log($e->getMessage());
+        return FALSE;
+    }
+        return $res;
+    }
 
-	// Do not use these functions to reference a function that may not
-	// exist yet - for example, if you add 'testFunction', it may not
-	// be visibile in here, as the PREVIOUS Class may already be loaded.
-	//
-	// Use install.php or uninstall.php instead, which guarantee a new
-	// instance of this object.
-	public function install()
-	{
-	}
-	public function uninstall()
-	{
-	}
+    /*Get trunks configuration*/
+    public function getTrunksConfiguration() {
+        try {
+            $result = array();
+            $trunks = \FreePBX::Core()->listTrunks();
+            foreach($trunks as $trunk) {
+                $result[$trunk['name']] = (object) array();
+            }
+        } catch (Exception $e) {
+            error_log($e->getMessage());
+            return FALSE;
+        }
+        return $result;
+    }
 
-	// The following two stubs are planned for implementation in FreePBX 15.
-	public function backup()
-	{
-	}
-	public function restore($backup)
-	{
-	}
-    public function doConfigPageInit($page) {}
+    /*Get queues configuration*/
+    public function getQueuesConfiguration() {
+        try {
+            $result = array();
+            $queues = \FreePBX::Queues()->listQueues();
+            foreach($queues as $queue) {
+                $result[$queue[0]] = (object) array("id" => $queue[0], "name" => $queue[1]);
+            }
+        } catch (Exception $e) {
+            error_log($e->getMessage());
+            return FALSE;
+        }
+        return $result;
+    }
 }
