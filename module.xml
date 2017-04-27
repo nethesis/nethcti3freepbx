@@ -4,13 +4,10 @@
   <name>NethCTI 3 Configuration Module</name>
   <version>1.0.0</version>
   <category>Applications</category>
-  <Publisher>Stefano Fancello</Publisher>
+  <Publisher>Nethesis</Publisher>
   <info></info>
   <licence>GPL</licence>
   <licenselink>http://www.gnu.org/licenses/gpl-2.0.txt</licenselink>
-  <menuitems>
-    <nethcti3>NethCTI 3 Configuration Module</nethcti3>
-</menuitems>
 <depends>
   <version>14</version>
 </depends>
