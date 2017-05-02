@@ -48,8 +48,24 @@ class Nethcti3 implements \BMO
         try {
             $result = array();
             $queues = \FreePBX::Queues()->listQueues();
+
+            //get dynmembers
+            global $astman;
+            $dbqpenalities = $astman->database_show('QPENALTY');
+            $penalities=array();
+            //build an array of members for each queue
+            foreach ($dbqpenalities as $dbqpenality => $tmp) {
+                if (preg_match ('/\/QPENALTY\/([0-9]+)\/agents\/([0-9]+)/',$dbqpenality,$matches)) {
+                    $penalities[$matches[1]][] = $matches[2];
+                }
+            }
+            //create result object
             foreach($queues as $queue) {
-                $result[$queue[0]] = (object) array("id" => $queue[0], "name" => $queue[1]);
+                //dynmembers = array() if there isn't dynmembers in $penalities for this queue
+                if (!isset($penalities[$queue[0]])) {
+                    $penalities[$queue[0]] = array();
+                }
+                $result[$queue[0]] = (object) array("id" => $queue[0], "name" => $queue[1], "dynmembers" => $penalities[$queue[0]]);
             }
         } catch (Exception $e) {
             error_log($e->getMessage());
