@@ -99,6 +99,21 @@ function nethcti3_get_config($engine) {
             throw new Exception('fail to write users config');
         }
 
+        // Write operator.json configuration file
+        $results = getCTIGroups();
+        if (!$results) {
+            throw new Exception('Empty operator config');
+        }
+        foreach ($results as $r) {
+            $out[$r['name']][] = $r['username'];
+        }
+        $final['groups'] = $out;
+        // Write operator.json configuration file
+        $res = $nethcti3->writeCTIConfigurationFile('/operator.json',$final);
+        if ($res === FALSE) {
+            throw new Exception('fail to write operator config');
+        }
+
         /*
         *    Write permissions json
         */
