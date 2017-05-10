@@ -71,7 +71,7 @@ function nethcti3_get_config($engine) {
                     $profileRes = $stmt->fetch();
 
                     if (!profileRes || !isset($profileRes['profile_id'])) {
-                        throw new Exception('no profile associated for '. $user['id']);
+                        error_log('no profile associated for '. $user['id']);
                     }
 
                     // Set cellphone
@@ -96,13 +96,13 @@ function nethcti3_get_config($engine) {
         $res = $nethcti3->writeCTIConfigurationFile('/users.json',$json);
 
         if ($res === FALSE) {
-            throw new Exception('fail to write users config');
+            error_log('fail to write users config');
         }
 
         // Write operator.json configuration file
         $results = getCTIGroups();
         if (!$results) {
-            throw new Exception('Empty operator config');
+            error_log('Empty operator config');
         }
         foreach ($results as $r) {
             $out[$r['name']][] = $r['username'];
@@ -111,7 +111,7 @@ function nethcti3_get_config($engine) {
         // Write operator.json configuration file
         $res = $nethcti3->writeCTIConfigurationFile('/operator.json',$final);
         if ($res === FALSE) {
-            throw new Exception('fail to write operator config');
+            error_log('fail to write operator config');
         }
 
         /*
@@ -119,7 +119,7 @@ function nethcti3_get_config($engine) {
         */
         $results = getCTIPermissionProfiles(false,true);
         if (!$results) {
-            throw new Exception('Empty profile config');
+            error_log('Empty profile config');
         }
         foreach ($results as $r) {
             $out[$r['id']] = $r;
@@ -127,7 +127,7 @@ function nethcti3_get_config($engine) {
         // Write profiles.json configuration file
         $res = $nethcti3->writeCTIConfigurationFile('/profiles.json',$out);
         if ($res === FALSE) {
-            throw new Exception('fail to write profiles config');
+            error_log('fail to write profiles config');
         }
 
         /*
@@ -138,7 +138,7 @@ function nethcti3_get_config($engine) {
         $obj->queues = $nethcti3->getQueuesConfiguration();
         $res = $nethcti3->writeCTIConfigurationFile('/ast_objects.json',$obj);
         if ($res === FALSE) {
-            throw new Exception('fail to write trunks config');
+            error_log('fail to write trunks config');
         }
 
         //Restart CTI
