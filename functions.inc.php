@@ -24,7 +24,7 @@ function nethcti3_get_config($engine) {
                     );
 
                     // Retrieve physical extensions
-                    $stmt = $dbh->prepare('SELECT extension, type FROM rest_devices_phones WHERE user_id = ?');
+                    $stmt = $dbh->prepare('SELECT extension, type, web_user, web_password FROM rest_devices_phones WHERE user_id = ?');
                     $stmt->execute(array($user['id']));
                     $res = $stmt->fetchAll();
 
@@ -36,10 +36,14 @@ function nethcti3_get_config($engine) {
                             );
 
                             if ($e['type'] === 'physical') {
-                                $settings['web_user'] = 'admin';
-                                $settings['web_password'] = 'admin';
-                            }
-                            else if ($e['type'] === 'webrtc' || $e['type'] === 'webrtc_mobile') {
+                                if (!is_null($e['web_user']) && !is_null($e['web_password'])) {
+                                    $settings['web_user'] = $e['web_user'];
+                                    $settings['web_password'] = $e['web_password'];
+                                } else {
+                                    $settings['web_user'] = 'admin';
+                                    $settings['web_password'] = 'admin';
+                                }
+                            } else if ($e['type'] === 'webrtc' || $e['type'] === 'webrtc_mobile') {
                                 // Retrieve webrtc sip credentials
                                 $stmt = $dbh->prepare('SELECT data FROM sip WHERE keyword IN ("account", "secret") AND id = ?');
                                 $stmt->execute(array($e['extension']));
