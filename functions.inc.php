@@ -47,8 +47,8 @@ function nethcti3_get_config($engine) {
                     $stmt->execute(array($user['id']));
                     $res = $stmt->fetchAll();
 
+                    $extensions = array();
                     if (count($res) > 0) {
-                        $extensions = array();
                         foreach ($res as $e) {
                             $settings = array(
                                 'type' => $e['type']
@@ -77,8 +77,8 @@ function nethcti3_get_config($engine) {
                             $extensions[$e['extension']] = (object)$settings;
                         }
 
-                        $endpoints['extension'] = $extensions;
                     }
+                    $endpoints['extension'] = (object)$extensions;
 
                     // Set voicemail
                     if (in_array($user['default_extension'], $enabledVoicemails)) {
