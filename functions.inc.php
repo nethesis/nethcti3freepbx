@@ -140,6 +140,7 @@ function nethcti3_get_config($engine) {
         /*
         *    Write permissions json
         */
+        $out = [];
         $results = getCTIPermissionProfiles(false,true);
         if (!$results) {
             error_log('Empty profile config');
@@ -163,6 +164,26 @@ function nethcti3_get_config($engine) {
         $res = $nethcti3->writeCTIConfigurationFile('/ast_objects.json',$obj);
         if ($res === FALSE) {
             error_log('fail to write trunks config');
+        }
+
+        // write streaming.json
+        $out = [];
+        $dbh = FreePBX::Database();
+        $sql = 'SELECT * FROM rest_cti_streaming';
+        $sth = $dbh->prepare($sql);
+        $sth->execute();
+        $results = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!$results) {
+            error_log('Empty profile config');
+        }
+        foreach ($results as $r) {
+            $out[$r['name']] = $r;
+        }
+        // Write streaming.json configuration file
+        $res = $nethcti3->writeCTIConfigurationFile('/streaming.json',$out);
+        if ($res === FALSE) {
+            error_log('fail to write streaming config');
         }
 
         //Restart CTI
