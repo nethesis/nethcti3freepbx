@@ -159,6 +159,7 @@ function nethcti3_get_config($engine) {
         $obj = new \stdClass();
         $obj->trunks = $nethcti3->getTrunksConfiguration();
         $obj->queues = $nethcti3->getQueuesConfiguration();
+        $obj->feature_codes = $nethcti3->getFeaturecodesConfiguration();
         $res = $nethcti3->writeCTIConfigurationFile('/ast_objects.json',$obj);
         if ($res === FALSE) {
             error_log('fail to write trunks config');

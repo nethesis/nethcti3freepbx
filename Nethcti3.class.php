@@ -92,4 +92,26 @@ class Nethcti3 implements \BMO
         }
         return $result;
     }
+
+    /*Get FeatureCodes configuration*/
+    public function getFeaturecodesConfiguration() {
+    try {
+        $result = array();
+        $codes_to_pick = array("pickup");
+        $featurecodes = featurecodes_getAllFeaturesDetailed();
+        foreach ($featurecodes as $featurcode) {
+            if (in_array($featurcode['featurename'],$codes_to_pick)) {
+                if (isset($featurcode['customcode']) && $featurcode['customcode'] != '') {
+                    $results[$featurcode['featurename']] = $featurcode['customcode'];
+                } else {
+                    $results[$featurcode['featurename']] = $featurcode['defaultcode'];
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log($e->getMessage());
+        return FALSE;
+    }
+        return (object) $results;
+    }
 }
