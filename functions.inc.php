@@ -178,7 +178,7 @@ function nethcti3_get_config($engine) {
             error_log('Empty profile config');
         }
         foreach ($results as $r) {
-            $pername = 'vs_'. strtolower(str_replace(' ', '_', preg_replace('/[^a-zA-Z0-9\s]/','',$r['name'])));
+            $pername = 'vs_'. strtolower(str_replace(' ', '_', preg_replace('/[^a-zA-Z0-9\s]/','',$r['descr'])));
             $out[$pername] = $r;
         }
         // Write streaming.json configuration file
