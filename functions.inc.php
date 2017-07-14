@@ -182,7 +182,7 @@ function nethcti3_get_config($engine) {
             $out[$pername] = $r;
         }
         // Write streaming.json configuration file
-        $res = $nethcti3->writeCTIConfigurationFile('/streaming.json',$out);
+        $res = $nethcti3->writeCTIConfigurationFile('/streaming.json',(object) $out);
         if ($res === FALSE) {
             error_log('fail to write streaming config');
         }
