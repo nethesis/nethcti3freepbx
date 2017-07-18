@@ -188,7 +188,7 @@ function nethcti3_get_config($engine) {
         }
 
         //Restart CTI
-        system("/usr/bin/sudo /usr/bin/systemctl restart nethcti-server &");
+        system("/usr/bin/sudo /usr/bin/systemctl reload nethcti-server &");
     } catch (Exception $e) {
         error_log($e->getMessage());
     }
