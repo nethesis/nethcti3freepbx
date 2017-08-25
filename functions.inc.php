@@ -87,7 +87,7 @@ function nethcti3_get_config($engine) {
 
                     // Set email
                     $endpoints['email'] = ($user['email'] ? array($user['email'] => (object) array()) : (object)array());
-                    $endpoints['jabber'] = ($user['email'] ? array($user['email'] => (object) array()) : (object)array());
+                    $endpoints['jabber'] = array($user['username']."@".$domainName => (object)array());
 
                     // Retrieve profile id and mobile
                     $stmt = $dbh->prepare('SELECT profile_id,mobile FROM rest_users WHERE user_id = ?');
