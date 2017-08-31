@@ -34,6 +34,7 @@ function nethcti3_get_config($engine) {
         $dbh = \FreePBX::Database();
         $freepbxVoicemails = \FreePBX::Voicemail()->getVoicemail();
         $enabledVoicemails = ($freepbxVoicemails['default'] != null) ? array_keys($freepbxVoicemails['default']) : array();
+        $domainName = end(explode('.', gethostname(), 2));
 
         foreach ($users as $user) {
             try {
