@@ -39,7 +39,7 @@ class Nethcti3 implements \BMO
     try {
         // Write configuration file
             require('/var/www/html/freepbx/rest/config.inc.php');
-        $res = file_put_contents($config['settings']['cti_config_path']. $filename,json_encode($obj, JSON_PRETTY_PRINT));
+        $res = file_put_contents($config['settings']['cti_config_path']. $filename,json_encode($obj, JSON_PRETTY_PRINT),LOCK_EX);
     } catch (Exception $e) {
         error_log($e->getMessage());
         return FALSE;
