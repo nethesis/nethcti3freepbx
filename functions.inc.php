@@ -27,7 +27,7 @@ function nethcti3_hookGet_config($engine) {
         case "asterisk":
             $defaultVal = $amp_conf['ASTCONFAPP'];
             $amp_conf['ASTCONFAPP'] = 'app_meetme';
-            $query='SELECT defaultcode FROM featurecodes WHERE modulename="nethcti" AND featurename="conference"';
+            $query='SELECT defaultcode FROM featurecodes WHERE modulename="nethcti3" AND featurename="meetme_conf"';
             $conf_code=$db->getOne($query);
             $exten='_'.$conf_code.'X.';
             $exten2=$conf_code;
