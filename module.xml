@@ -2,7 +2,7 @@
   <rawname>nethcti3</rawname>
   <repo>unsupported</repo>
   <name>NethCTI 3 Configuration Module</name>
-  <version>1.0.7</version>
+  <version>1.0.9</version>
   <category>Applications</category>
   <Publisher>Nethesis</Publisher>
   <info></info>
@@ -15,5 +15,4 @@
 
 <description>Generate NethCTI 3 Configuration hooking apply config</description>
 <changelog></changelog>
-
 </module>

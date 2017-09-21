@@ -19,7 +19,7 @@
 # along with NethServer.  If not, see COPYING.
 #
 
-function nethcti3_hookGet_config($engine) {
+function nethcti3_get_config($engine) {
     global $ext;
     global $amp_conf;
     global $db;
@@ -49,10 +49,6 @@ function nethcti3_hookGet_config($engine) {
             $amp_conf['ASTCONFAPP'] = $defaultVal;
         break;
     }
-}
-
-
-function nethcti3_get_config($engine) {
 
     // Write cti configuration file
     include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
