@@ -138,7 +138,7 @@ function nethcti3_get_config($engine) {
                         'profile_id' => $profileRes['profile_id']
                     );
 
-                    $json[$user['username']] = $userJson;
+                    $json[preg_replace('/@[\.a-zA-Z0-9]*/','',$user['username'])] = $userJson;
                     // error_log(print_r($user, true));
                 }
             } catch (Exception $e) {
