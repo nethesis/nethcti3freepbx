@@ -53,10 +53,10 @@ class Nethcti3 implements \BMO
             $result = array();
             $trunks = \FreePBX::Core()->listTrunks();
             foreach($trunks as $trunk) {
-                $result[$trunk['name']] = (object)array(
+                $result[$trunk['channelid']] = (object)array(
                     "tech"=>$trunk["tech"],
                     "trunkid"=>$trunk["trunkid"],
-                    "channelid"=>$trunk["channelid"],
+                    "name"=>$trunk["name"],
                     "maxchans"=>$trunk["maxchans"]
                 );
             }
