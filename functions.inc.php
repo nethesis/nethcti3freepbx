@@ -218,8 +218,8 @@ function nethcti3_get_config($engine) {
             error_log('fail to write streaming config');
         }
 
-        //Restart CTI
-        system("/usr/bin/sudo /usr/bin/systemctl reload nethcti-server &");
+        //Reload CTI
+        system("/var/www/html/freepbx/rest/lib/ctiReloadHelper.sh > /dev/null 2>&1 &");
     } catch (Exception $e) {
         error_log($e->getMessage());
     }
