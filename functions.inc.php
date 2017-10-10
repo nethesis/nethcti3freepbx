@@ -48,7 +48,17 @@ function nethcti3_get_config($engine) {
 
             $ext->add($context, 'h', '', new ext_hangup());
             $amp_conf['ASTCONFAPP'] = $defaultVal;
-            /*Off-Hours*/
+        break;
+    }
+}
+
+function nethcti3_get_config_late($engine) {
+    global $ext;
+    global $amp_conf;
+    global $db;
+    switch($engine) {
+        case "asterisk":
+            /*Off-Hour*/
             $routes = FreePBX::Core()->getAllDIDs();
             foreach ($routes as $did) {
                 /*add off-hour agi for each inbound routes*/
@@ -67,7 +77,7 @@ function nethcti3_get_config($engine) {
                     $pricid = false;
                 }
                 $context = ($pricid) ? "ext-did-0001":"ext-did-0002";
-                $ext->splice($context, $exten, "night-end", new ext_agi('offhour.php,'.$did['cidnum'].','.$did['extension'].','.$did['destination']),'night');
+                $ext->splice($context, $exten, "did-cid-hook", new ext_agi('offhour.php,'.$did['cidnum'].','.$did['extension']),'offhour',2);
             }
         break;
     }

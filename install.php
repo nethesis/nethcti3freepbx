@@ -5,7 +5,7 @@ global $db;
 global $amp_conf;
 
 $sql='
-    CREATE TABLE IF NOT EXISTS `offhours` (
+    CREATE TABLE IF NOT EXISTS `offhour` (
       `id` int(11) NOT NULL auto_increment,
       `displayname` varchar(50) default NULL,
       `didcidnum` varchar(20) default NULL,
@@ -16,7 +16,7 @@ $sql='
       `action` int(1) DEFAULT NULL,
       `param` varchar(50) DEFAULT NULL,
       `destination` varchar(500) DEFAULT "",
-      `enabled` tinyint(1) DEFAULT '0',
+      `enabled` tinyint(1) DEFAULT "0",
       PRIMARY KEY  (`id`)
    ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 ';
