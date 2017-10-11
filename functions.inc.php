@@ -30,24 +30,26 @@ function nethcti3_get_config($engine) {
             $amp_conf['ASTCONFAPP'] = 'app_meetme';
             $query='SELECT defaultcode FROM featurecodes WHERE modulename="nethcti3" AND featurename="meetme_conf"';
             $conf_code=$db->getOne($query);
-            $exten='_'.$conf_code.'X.';
-            $exten2=$conf_code;
-            $context='cti-conference';
-            $ext->addInclude('from-internal-additional', $context);
-            $ext->add($context, $exten, '', new ext_noop('conference'));
-            $ext->splice($context, $exten, 'n', new ext_answer());
-            $ext->splice($context, $exten, 'n', new ext_playback('beep'));
-            $ext->splice($context, $exten, 'n', new ext_meetme('${EXTEN}', '1dM'));
-            $ext->splice($context, $exten, 'n', new ext_hangup());
+            if (isset($conf_code) && $conf_code != '') {
+                $exten='_'.$conf_code.'X.';
+                $exten2=$conf_code;
+                $context='cti-conference';
+                $ext->addInclude('from-internal-additional', $context);
+                $ext->add($context, $exten, '', new ext_noop('conference'));
+                $ext->splice($context, $exten, 'n', new ext_answer());
+                $ext->splice($context, $exten, 'n', new ext_playback('beep'));
+                $ext->splice($context, $exten, 'n', new ext_meetme('${EXTEN}', '1dM'));
+                $ext->splice($context, $exten, 'n', new ext_hangup());
 
-            $ext->add($context, $exten2, '', new ext_noop('conference'));
-            $ext->splice($context, $exten2, 'n', new ext_answer());
-            $ext->splice($context, $exten2, 'n', new ext_playback('beep'));
-            $ext->splice($context, $exten2, 'n', new ext_meetme('${EXTEN}${CALLERID(number)}', '1dM'));
-            $ext->splice($context, $exten2, 'n', new ext_hangup());
+                $ext->add($context, $exten2, '', new ext_noop('conference'));
+                $ext->splice($context, $exten2, 'n', new ext_answer());
+                $ext->splice($context, $exten2, 'n', new ext_playback('beep'));
+                $ext->splice($context, $exten2, 'n', new ext_meetme('${EXTEN}${CALLERID(number)}', '1dM'));
+                $ext->splice($context, $exten2, 'n', new ext_hangup());
 
-            $ext->add($context, 'h', '', new ext_hangup());
-            $amp_conf['ASTCONFAPP'] = $defaultVal;
+                $ext->add($context, 'h', '', new ext_hangup());
+                $amp_conf['ASTCONFAPP'] = $defaultVal;
+            }
         break;
     }
 }
