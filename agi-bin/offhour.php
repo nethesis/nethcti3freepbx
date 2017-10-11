@@ -44,7 +44,7 @@ $utc_dt = new DateTime("now", $utc_dtz);
 
 $offset = $dtz->getOffset($dt) - $utc_dtz->getOffset($utc_dt);
 
-@$agi->verbose("[offhour] TimeZone=".$tz,2);
+@$agi->verbose("[offhour] TimeZone=".$tz,4);
 
 $didcidnum = $argv[1];
 $didextension = $argv[2];
@@ -52,12 +52,12 @@ $didextension = $argv[2];
 $sql="SELECT * FROM offhour WHERE didcidnum='$didcidnum' AND didextension='$didextension'";
 $res=@$db->getRow($sql,DB_FETCHMODE_ASSOC);
 if (@$db->isError($res)) {
-    @$agi->verbose("[offhour] MySQL ERROR! ".$sql.$res->getMessage());
+    @$agi->verbose("[offhour] MySQL ERROR! ".$sql.$res->getMessage(),1);
     exit(0);
 }
 
 if (empty($res)) {
-    @$agi->verbose("[offhour] No Off-Hours setting for this route",2);
+    @$agi->verbose("[offhour] No Off-Hours setting for this route",3);
     exit(0);
 }
 
@@ -65,7 +65,7 @@ $time = time()+$offset;
 $tbegin=$res['tsbegin']+$offset;
 $tend=$res['tsend']+$offset;
    
-@$agi->verbose("[offhour] Off-Hour {$res['displayname']} ($id)  -> enabled={$res['enabled']}, begin: $tbegin, now: $time, end: $tend",2);
+@$agi->verbose("[offhour] Off-Hour {$res['displayname']} ($id)  -> enabled={$res['enabled']}, begin: $tbegin, now: $time, end: $tend",4);
 
 
 //Decide if this condition is enabled or not
@@ -92,7 +92,7 @@ if ($res['enabled']==2) {
 switch ($res['action']) {
     case "0":
         //Message and hangup
-        @$agi->verbose("[offhour] message and hangup",2);
+        @$agi->verbose("[offhour] message and hangup",3);
         $agi->answer();
         $agi->stream_file($res['message']);
         $agi->stream_file($res['message']);
@@ -101,11 +101,11 @@ switch ($res['action']) {
     break;
     case "1":
         //Message and voicemail
-        @$agi->verbose("[offhour] message and voicemail",2);
+        @$agi->verbose("[offhour] message and voicemail",3);
         $agi->answer();
         $agi->stream_file($res['message']);
         if ($res['param'] != '') {
-            @$agi->verbose("[offhour] Message on Voicemail: ".$res['param']);
+            @$agi->verbose("[offhour] Message on Voicemail: ".$res['param'],4);
             $agi->exec("Macro","vm,{$res['param']},NOMESSAGE");
         } 
         $agi->exec("Macro","hangupcall");
@@ -113,16 +113,16 @@ switch ($res['action']) {
     case "2":
         //Call forward
         if ($res['param'] != '') {
-            @$agi->verbose("[offhour] call forward to {$res['param']}",2);
+            @$agi->verbose("[offhour] call forward to {$res['param']}",4);
             # Dial Local/$param...
             $agi->exec_dial("Local",$res['param']."@from-internal");
         } else {
-            @$agi->verbose("[offhour] Off-Hour NethCTI mode: call forward ERROR! MISSING DESTINATION!",2);
+            @$agi->verbose("[offhour] Off-Hour NethCTI mode: call forward ERROR! MISSING DESTINATION!",1);
         }
         $agi->exec("Macro","hangupcall");
      break;
      default:
-         @$agi->verbose("[offhour] Unknow action: ".$res['action'],2);
+         @$agi->verbose("[offhour] Unknow action: ".$res['action'],1);
      break;
 }
 
