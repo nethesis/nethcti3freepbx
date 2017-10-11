@@ -25,6 +25,7 @@ function nethcti3_get_config($engine) {
     global $db;
     switch($engine) {
         case "asterisk":
+            /*Configure conference*/
             $defaultVal = $amp_conf['ASTCONFAPP'];
             $amp_conf['ASTCONFAPP'] = 'app_meetme';
             $query='SELECT defaultcode FROM featurecodes WHERE modulename="nethcti3" AND featurename="meetme_conf"';
@@ -47,6 +48,37 @@ function nethcti3_get_config($engine) {
 
             $ext->add($context, 'h', '', new ext_hangup());
             $amp_conf['ASTCONFAPP'] = $defaultVal;
+        break;
+    }
+}
+
+function nethcti3_get_config_late($engine) {
+    global $ext;
+    global $amp_conf;
+    global $db;
+    switch($engine) {
+        case "asterisk":
+            /*Off-Hour*/
+            $routes = FreePBX::Core()->getAllDIDs();
+            foreach ($routes as $did) {
+                /*add off-hour agi for each inbound routes*/
+                if($did['extension'] && $did['cidnum'])
+                    $exten = $did['extension']."/".$did['cidnum'];
+                else if (!$did['extension'] && $did['cidnum'])
+                    $exten = "s/".$did['cidnum'];
+                else if ($did['extension'] && !$did['cidnum'])
+                    $exten = $did['extension'];
+                else if (!$did['extension'] && !$did['cidnum'])
+                    $exten = "s";
+
+                if (($did['cidnum'] != '' && $did['extension'] != '') || ($did['cidnum'] == '' && $did['extension'] == '')) {
+                    $pricid = true;
+                } else {
+                    $pricid = false;
+                }
+                $context = ($pricid) ? "ext-did-0001":"ext-did-0002";
+                $ext->splice($context, $exten, "did-cid-hook", new ext_agi('offhour.php,'.$did['cidnum'].','.$did['extension']),'offhour',2);
+            }
         break;
     }
 
