@@ -251,7 +251,8 @@ function nethcti3_get_config_late($engine) {
         if ($res === FALSE) {
             error_log('fail to write streaming config');
         }
-
+        //Move provisioning files from /var/lib/tftpnethvoice to /var/lib/tftpboot
+        system("/usr/bin/sudo /usr/bin/php /var/www/html/freepbx/rest/lib/moveProvisionFiles.php");
         //Reload CTI
         system("/var/www/html/freepbx/rest/lib/ctiReloadHelper.sh > /dev/null 2>&1 &");
     } catch (Exception $e) {
