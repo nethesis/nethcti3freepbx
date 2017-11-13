@@ -57,6 +57,7 @@ class Nethcti3 implements \BMO
                     "tech"=>$trunk["tech"],
                     "trunkid"=>$trunk["trunkid"],
                     "name"=>$trunk["name"],
+                    "usercontext"=>$trunk["usercontext"],
                     "maxchans"=>$trunk["maxchans"]
                 );
             }
