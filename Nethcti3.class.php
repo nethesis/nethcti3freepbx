@@ -103,7 +103,7 @@ class Nethcti3 implements \BMO
     public function getFeaturecodesConfiguration() {
     try {
         $result = array();
-        $codes_to_pick = array("pickup","meetme_conf","blindxfer"); //Add here more codes
+        $codes_to_pick = array("pickup","meetme_conf"); //Add here more codes
         $featurecodes = featurecodes_getAllFeaturesDetailed();
         foreach ($featurecodes as $featurcode) {
             if (in_array($featurcode['featurename'],$codes_to_pick)) {
@@ -119,5 +119,19 @@ class Nethcti3 implements \BMO
         return FALSE;
     }
         return (object) $results;
+    }
+
+    public function getTransferContext() {
+        try {
+            $dbh = \FreePBX::Database();
+            $sql = 'SELECT `value` FROM `freepbx_settings` WHERE `keyword` = "TRANSFER_CONTEXT"';
+            $sth = $dbh->prepare($sql);
+            $sth->execute();
+            $res = $sth->fetchAll()[0][0];
+        } catch (Exception $e) {
+            error_log($e->getMessage());
+            return FALSE;
+        }
+        return $res;
     }
 }
