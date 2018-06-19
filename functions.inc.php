@@ -206,13 +206,14 @@ function nethcti3_get_config_late($engine) {
         *    Write permissions json
         */
         $out = [];
-        $results = getCTIPermissionProfiles(false,true);
+        $results = getCTIPermissionProfiles(false,true,false);
         if (!$results) {
             error_log('Empty profile config');
         }
         foreach ($results as $r) {
             $out[$r['id']] = $r;
         }
+
         // Write profiles.json configuration file
         $res = $nethcti3->writeCTIConfigurationFile('/profiles.json',$out);
         if ($res === FALSE) {
