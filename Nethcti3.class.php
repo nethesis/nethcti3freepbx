@@ -85,12 +85,14 @@ class Nethcti3 implements \BMO
                 }
             }
             //create result object
-            foreach($queues as $queue) {
+            foreach ($queues as $queue) {
+                $queue_details = queues_get($queue[0]);
+
                 //dynmembers = array() if there isn't dynmembers in $penalities for this queue
                 if (!isset($penalities[$queue[0]])) {
                     $penalities[$queue[0]] = array();
                 }
-                $result[$queue[0]] = (object) array("id" => $queue[0], "name" => $queue[1], "dynmembers" => $penalities[$queue[0]]);
+                $result[$queue[0]] = (object) array("id" => $queue[0], "name" => $queue[1], "dynmembers" => $penalities[$queue[0]], "sla"=>$queue_details['servicelevel']);
             }
         } catch (Exception $e) {
             error_log($e->getMessage());
