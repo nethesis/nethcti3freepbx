@@ -98,6 +98,7 @@ function nethcti3_get_config_late($engine) {
         $freepbxVoicemails = \FreePBX::Voicemail()->getVoicemail();
         $enabledVoicemails = ($freepbxVoicemails['default'] != null) ? array_keys($freepbxVoicemails['default']) : array();
         $domainName = end(explode('.', gethostname(), 2));
+        $enableJanus = false;
 
         foreach ($users as $user) {
             try {
@@ -136,6 +137,7 @@ function nethcti3_get_config_late($engine) {
                                     $settings['user'] = $sipres[0]['data'];
                                     $settings['password'] = $sipres[1]['data'];
                                 }
+                                $enableJanus = true;
                             }
 
                             $extensions[$e['extension']] = (object)$settings;
@@ -178,6 +180,13 @@ function nethcti3_get_config_late($engine) {
             } catch (Exception $e) {
                 error_log($e->getMessage());
             }
+        }
+
+        //enable Janus Gateway if there are WebRTC extensions
+        if ($enableJanus) {
+            // enable janus in configuration database
+            system('/usr/bin/sudo /sbin/e-smith/config setprop janus-gateway status enabled');
+            system('/usr/bin/sudo /usr/bin/systemctl start janus-gateway');
         }
 
         // Write users.json configuration file
