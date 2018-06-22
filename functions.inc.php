@@ -186,7 +186,7 @@ function nethcti3_get_config_late($engine) {
         if ($enableJanus) {
             // enable janus in configuration database
             system('/usr/bin/sudo /sbin/e-smith/config setprop janus-gateway status enabled');
-            system('/usr/bin/sudo /usr/bin/systemctl start janus-gateway');
+            system('/usr/bin/sudo /sbin/e-smith/signal-event runlevel-adjust');
         }
 
         // Write users.json configuration file
