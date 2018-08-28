@@ -38,8 +38,10 @@ class Nethcti3 implements \BMO
     public function writeCTIConfigurationFile($filename, $obj) {
     try {
         // Write configuration file
-            require('/var/www/html/freepbx/rest/config.inc.php');
+        require('/var/www/html/freepbx/rest/config.inc.php');
         $res = file_put_contents($config['settings']['cti_config_path']. $filename,json_encode($obj, JSON_PRETTY_PRINT),LOCK_EX);
+        chown($config['settings']['cti_config_path']. $filename,'asterisk');
+        chgrp($config['settings']['cti_config_path']. $filename,'asterisk');
     } catch (Exception $e) {
         error_log($e->getMessage());
         return FALSE;
