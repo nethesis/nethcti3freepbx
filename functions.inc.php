@@ -50,6 +50,11 @@ function nethcti3_get_config($engine) {
                 $ext->add($context, 'h', '', new ext_hangup());
                 $amp_conf['ASTCONFAPP'] = $defaultVal;
             }
+            /*Intra company routes context*/
+            $context='from-intracompany';
+            $ext->add($context, '_X.', '', new ext_noop('intracompany'));
+            $ext->add($context, '_X.', '', new ext_set('AMPUSERCIDNAME','${CALLERID(name)}'));
+            $ext->add($context, '_X.', '', new ext_goto('1','${EXTEN}','from-internal'));
         break;
     }
 }
