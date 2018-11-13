@@ -141,6 +141,8 @@ function nethcti3_get_config_late($engine) {
                                 if ($sipres[0]['data'] && $sipres[1]['data']) {
                                     $settings['user'] = $sipres[0]['data'];
                                     $settings['password'] = $sipres[1]['data'];
+                                } else {
+                                    continue;
                                 }
                                 $enableJanus = true;
                             }
