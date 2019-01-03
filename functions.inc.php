@@ -120,6 +120,9 @@ function nethcti3_get_config_late($engine) {
                     $extensions = array();
                     if (count($res) > 0) {
                         foreach ($res as $e) {
+                            if ($e['type'] === 'temporaryphysical') {
+                                $e['type'] = 'physical';
+                            }
                             $settings = array(
                                 'type' => $e['type']
                             );
