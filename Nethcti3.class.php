@@ -23,6 +23,14 @@ namespace FreePBX\modules;
 
 class Nethcti3 implements \BMO
 {
+    public function __construct($freepbx = null) {
+        if ($freepbx == null)
+            throw new Exception("Not given a FreePBX Object");
+
+        $this->FreePBX = $freepbx;
+        $this->db = $freepbx->Database;
+    }
+
     public function install() {
     }
     public function uninstall() {
@@ -96,6 +104,13 @@ class Nethcti3 implements \BMO
                 }
                 $result[$queue[0]] = (object) array("id" => $queue[0], "name" => $queue[1], "dynmembers" => $penalities[$queue[0]], "sla"=>$queue_details['servicelevel']);
             }
+            //add oppanel special queues
+            foreach (getCTIPermissionProfiles(false,false,false) as $profile){
+                if (isset($profile['macro_permissions']['operator_panel']) && $profile['macro_permissions']['operator_panel']['value'] == true) {
+                    $exten = "ctiopqueue".$profile['id'];
+                    $result[$exten] = (object) array("id" => $exten, "name" => "Waiting Queue ".$profile['id'], "dynmembers" => array(),"sla" => "60");
+                }
+            }
         } catch (Exception $e) {
             error_log($e->getMessage());
             return FALSE;
@@ -137,5 +152,35 @@ class Nethcti3 implements \BMO
             return FALSE;
         }
         return $res;
+    }
+
+    public function writeConfig($conf){
+          $this->FreePBX->WriteConfig($conf);
+          if (isset($conf['queues_nethcti.conf'])) {
+              // Make sure that there is queues_nethcti.conf in queues.conf
+              $dir = $this->FreePBX->Config->get('ASTETCDIR');
+              $queues_conf = explode("\n",file_get_contents($dir.'/'.'queues.conf'));
+              if (! in_array('#include queues_nethcti.conf',$queues_conf)) {
+                  $new_queues_conf = array();
+                  foreach ($queues_conf as $row) {
+                      if ($row === '#include queues_post_custom.conf') $new_queues_conf[] = '#include queues_nethcti.conf';
+                      $new_queues_conf[] = $row;
+                  }
+                  $this->FreePBX->WriteConfig(array('queues.conf' => implode("\n",$new_queues_conf)));
+              }
+          }
+    }
+
+    // Generate configuration for Operator Panel waiting queues
+    public function genConfig() {
+        $out = array();
+        include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
+        foreach (getCTIPermissionProfiles(false,false,false) as $profile){
+            if (isset($profile['macro_permissions']['operator_panel']) && $profile['macro_permissions']['operator_panel']['value'] == true) {
+                $exten = "ctiopqueue".$profile['id'];
+                $out['queues_nethcti.conf'] .= "[$exten]\nannounce-frequency=0\nannounce-holdtime=no\nannounce-position=no\njoinempty=yes\nleavewhenempty=no\n\n";
+            }
+        }
+        return $out;
     }
 }
