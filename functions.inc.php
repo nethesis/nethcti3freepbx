@@ -23,6 +23,7 @@ function nethcti3_get_config($engine) {
     global $ext;
     global $amp_conf;
     global $db;
+    include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
     switch($engine) {
         case "asterisk":
             /*Configure conference*/
@@ -55,6 +56,15 @@ function nethcti3_get_config($engine) {
             $ext->add($context, '_X.', '', new ext_noop('intracompany'));
             $ext->add($context, '_X.', '', new ext_set('AMPUSERCIDNAME','${CALLERID(name)}'));
             $ext->add($context, '_X.', '', new ext_goto('1','${EXTEN}','from-internal'));
+            /* Add Waiting Queues for Operator Panel*/
+            $context = 'from-internal';
+            foreach (getCTIPermissionProfiles(false,false,false) as $profile){
+                if (isset($profile['macro_permissions']['operator_panel']) && $profile['macro_permissions']['operator_panel']['value'] == true) {
+                    $exten = "ctiopqueue".$profile['id'];
+                    // Queue(queuename[,options[,URL[,announceoverride[,timeout[,AGI[,macro[,gosub[,rule[,position]]]]]]]]])
+                    $ext->add($context, $exten,'',new ext_queue($exten, 't', '', '', '9999', '', '', '', '',''));
+                }
+            }
         break;
     }
 }
@@ -230,6 +240,11 @@ function nethcti3_get_config_late($engine) {
             error_log('Empty profile config');
         }
         foreach ($results as $r) {
+            // Add oppanel waiting queue
+            if ($r['macro_permissions']['operator_panel']['value']) {
+                $r['macro_permissions']['operator_panel']['permissions'][] = array('name' => 'waiting_queue_'.$r['id'], 'value' => true);
+            }
+
             $out[$r['id']] = $r;
         }
 
