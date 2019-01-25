@@ -57,7 +57,7 @@ function nethcti3_get_config($engine) {
             $ext->add($context, '_X.', '', new ext_set('AMPUSERCIDNAME','${CALLERID(name)}'));
             $ext->add($context, '_X.', '', new ext_goto('1','${EXTEN}','from-internal'));
             /* Add Waiting Queues for Operator Panel*/
-            $context = 'from-internal';
+            $context = 'ctiopqueue';
             foreach (getCTIPermissionProfiles(false,false,false) as $profile){
                 if (isset($profile['macro_permissions']['operator_panel']) && $profile['macro_permissions']['operator_panel']['value'] == true) {
                     $exten = "ctiopqueue".$profile['id'];
