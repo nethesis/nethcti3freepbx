@@ -240,6 +240,11 @@ function nethcti3_get_config_late($engine) {
             error_log('Empty profile config');
         }
         foreach ($results as $r) {
+            // Add oppanel waiting queue
+            if ($r['macro_permissions']['operator_panel']['value']) {
+                $r['macro_permissions']['operator_panel']['permissions'][] = array('name' => 'waiting_queue_'.$r['id'], 'value' => true);
+            }
+
             $out[$r['id']] = $r;
         }
 
