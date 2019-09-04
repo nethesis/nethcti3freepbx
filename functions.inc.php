@@ -118,6 +118,17 @@ function nethcti3_get_config_late($engine) {
         foreach ($users as $user) {
             try {
                 if ($user['default_extension'] !== 'none') {
+
+                    // Retrieve profile id and mobile
+                    $stmt = $dbh->prepare('SELECT profile_id,mobile FROM rest_users WHERE user_id = ?');
+                    $stmt->execute(array($user['id']));
+                    $profileRes = $stmt->fetch();
+
+                    // Skip user if he doesn't have a profile associated
+                    if ($profileRes['profile_id'] == null) {
+                        continue;
+                    }
+
                     $endpoints = array(
                         'mainextension' => (array($user['default_extension'] => (object)array()))
                     );
@@ -174,15 +185,6 @@ function nethcti3_get_config_late($engine) {
                     // Set email
                     $endpoints['email'] = ($user['email'] ? array($user['email'] => (object) array()) : (object)array());
                     $endpoints['jabber'] = array($user['username']."@".$domainName => (object)array());
-
-                    // Retrieve profile id and mobile
-                    $stmt = $dbh->prepare('SELECT profile_id,mobile FROM rest_users WHERE user_id = ?');
-                    $stmt->execute(array($user['id']));
-                    $profileRes = $stmt->fetch();
-
-                    if (!profileRes || !isset($profileRes['profile_id'])) {
-                        error_log('no profile associated for '. $user['id']);
-                    }
 
                     // Set cellphone
                     $endpoints['cellphone'] = ($profileRes['mobile'] ? array($profileRes['mobile'] => (object) array()) : (object)array());
