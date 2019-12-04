@@ -134,7 +134,7 @@ function nethcti3_get_config_late($engine) {
                     );
 
                     // Retrieve physical extensions
-                    $stmt = $dbh->prepare('SELECT extension, type, web_user, web_password FROM rest_devices_phones WHERE user_id = ?');
+                    $stmt = $dbh->prepare('SELECT extension, type, web_user, web_password, mac FROM rest_devices_phones WHERE user_id = ?');
                     $stmt->execute(array($user['id']));
                     $res = $stmt->fetchAll();
 
@@ -156,6 +156,7 @@ function nethcti3_get_config_late($engine) {
                                     $settings['web_user'] = 'admin';
                                     $settings['web_password'] = 'admin';
                                 }
+                                $settings['mac'] = $e['mac'];
                             } else if ($e['type'] === 'webrtc' || $e['type'] === 'webrtc_mobile') {
                                 // Retrieve webrtc sip credentials
                                 $stmt = $dbh->prepare('SELECT data FROM sip WHERE keyword IN ("account", "secret") AND id = ?');
