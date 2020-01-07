@@ -157,7 +157,7 @@ function nethcti3_get_config_late($engine) {
                                     $settings['web_password'] = 'admin';
                                 }
                                 $settings['mac'] = $e['mac'];
-                            } else if ($e['type'] === 'webrtc' || $e['type'] === 'webrtc_mobile') {
+                            } else if ($e['type'] === 'webrtc' || $e['type'] === 'mobile') {
                                 // Retrieve webrtc sip credentials
                                 $stmt = $dbh->prepare('SELECT data FROM sip WHERE keyword IN ("account", "secret") AND id = ?');
                                 $stmt->execute(array($e['extension']));
