@@ -299,3 +299,163 @@ function nethcti3_get_config_late($engine) {
     }
 }
 
+function nethcti3_get_config_early($engine) {
+    include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
+
+    // Check proviosioning engine and continue only for Tancredi
+    exec("/usr/bin/sudo /sbin/e-smith/config getprop nethvoice ProvisioningEngine", $out);
+    if ($out[0] !== 'tancredi') return TRUE;
+
+    global $astman;
+    global $amp_conf;
+    // Call Tancredi API to set variables that needs to be set on FreePBX retrieve conf
+    // get featurecodes
+    $dbh = FreePBX::Database();
+    $sql = 'SELECT modulename,featurename,defaultcode,customcode FROM featurecodes';
+    $stmt = $dbh->prepare($sql);
+    $stmt->execute(array());
+    $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    $featurecodes = array();
+    foreach ($res as $featurecode) {
+        $featurecodes[$featurecode['modulename'].$featurecode['featurename']] = (!empty($featurecode['customcode'])?$featurecode['customcode']:$featurecode['defaultcode']);
+    }
+
+    $variables = array();
+
+    /***********
+    * Defaults *
+    ************/
+    //featurcodes
+    $variables['cftimeouton'] = $featurecodes['callforwardcfuon'];
+    $variables['cftimeoutoff'] = $featurecodes['callforwardcfuoff'];
+    $variables['cfbusyoff'] = $featurecodes['callforwardcfboff'];
+    $variables['cfbusyon'] = $featurecodes['callforwardcfbon'];
+    $variables['cfalwaysoff'] = $featurecodes['callforwardcfoff'];
+    $variables['cfalwayson'] = $featurecodes['callforwardcfon'];
+    $variables['dndoff'] = $featurecodes['donotdisturbdnd_off'];
+    $variables['dndon'] = $featurecodes['donotdisturbdnd_on'];
+    $variables['call_waiting_off'] = $featurecodes['callwaitingcwoff'];
+    $variables['call_waiting_on'] = $featurecodes['callwaitingcwon'];
+    $variables['pickup_direct'] = $featurecodes['corepickup'];
+    $variables['pickup_group'] = $featurecodes['corepickupexten'];
+
+    $variables['cftimeout'] = $amp_conf['CFRINGTIMERDEFAULT'];
+
+
+    /*********************
+    * Extension specific *
+    *********************/
+    $sql = 'SELECT userman_users.username as username,
+                userman_users.default_extension as mainextension,
+                rest_devices_phones.mac,
+                rest_devices_phones.extension,
+                rest_devices_phones.secret,
+                rest_devices_phones.web_password,
+                rest_users.profile_id
+            FROM
+                rest_devices_phones JOIN userman_users ON rest_devices_phones.user_id = userman_users.id
+                JOIN rest_users ON rest_devices_phones.user_id = rest_users.user_id
+            WHERE rest_devices_phones.type = "physical"';
+    $stmt = $dbh->prepare($sql);
+    $stmt->execute(array());
+    $extdata = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+    // Get CTI profile permissions
+    $permissions = getCTIPermissionProfiles(false,true,true);
+
+    $tancrediUrl = 'http://localhost/tancredi/api/v1/';
+
+    // Get Tancredi authentication variables
+    include_once '/var/www/html/freepbx/rest/config.inc.php';
+    $user = 'admin';
+    $secret = $config['settings']['secretkey'];
+
+    $stmt = $dbh->prepare("SELECT * FROM ampusers WHERE sections LIKE '%*%' AND username = ?");
+    $stmt->execute(array($user));
+    $user = $stmt->fetchAll();
+    $password_sha1 = $user[0]['password_sha1'];
+    $username = $user[0]['username'];
+    $secretkey = sha1($username . $password_sha1 . $secret);
+
+    // loop for each physical device
+    foreach ($extdata as $ext) {
+        $extension = $ext['extension'];
+        $mainextension = $ext['mainextension'];
+
+        // Get extension sip parameters
+        $sql = 'SELECT keyword,data FROM sip WHERE id = ?';
+        $stmt = $dbh->prepare($sql);
+        $stmt->execute(array($extension));
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $sip = array();
+        foreach ($res as $value) {
+            $sip[$value['keyword']] = $value['data'];
+        }
+
+        $user_variables['cftimeout'] = $astman->database_get("AMPUSER",$mainextension.'/followme/prering');
+        foreach ($permissions[$ext['profile_id']]['macro_permissions']['settings']['permissions'] as $permission) {
+            if ($permission['name'] == 'dnd') {
+                $user_variables['dnd_allow'] = (string)(int) $permission['value'];
+            } elseif ($permission['name'] == 'call_forward') {
+                $user_variables['fwd_allow'] = (string)(int) $permission['value'];
+            }
+        }
+        // srtp
+        if (array_key_exists('media_encryption', $sip) && $sip['media_encryption'] == 'yes') {
+            $user_variables['srtp'] = 1;
+        } else {
+            $user_variables['srtp'] = 0;
+        }
+        // transport_type
+        if (array_key_exists('transport_type', $sip) && strstr($sip['transport_type'], 'tls') !== FALSE) {
+            $user_variables['transport_type'] = 2; // transport = TLS
+        } else {
+            $user_variables['transport_type'] = 0; // transport = UDP
+        }
+
+        $user_variables['line_active'] = 1;
+        if (array_key_exists('callerid', $sip)) {
+            $user_variables['displayname'] = $sip['callerid'];
+        }
+
+        $user_variables['username'] = $extension;
+        $user_variables['secret'] = $sip['secret'];
+        $user_variables['dtmfmode'] = 1;
+        if (array_key_exists('dtmfmode',$sip)) {
+            if ($sip['dtmfmode'] == 'inband') $user_variables['dtmf_type'] = 0;
+            elseif ($sip['dtmfmode'] == 'rfc2833') $user_variables['dtmf_type'] = 1;
+            elseif ($sip['dtmfmode'] == 'info') $user_variables['dtmf_type'] = 2;
+            elseif ($sip['dtmfmode'] == 'rfc4733') $user_variables['dtmf_type'] = 3;
+        }
+
+        $res = nethcti_tancredi_patch($tancrediUrl . 'phones/' . str_replace(':','-',$ext['mac']), $username, $secretkey, $user_variables);
+    }
+    /***********************************
+    * call Tancredi /defaults REST API *
+    ************************************/
+    $res = nethcti_tancredi_patch($tancrediUrl . 'defaults', $username, $secretkey, $variables);
+}
+
+function nethcti_tancredi_patch($url, $username, $secretkey, $data) {
+    $data = json_encode($data);
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+    curl_setopt($ch, CURLOPT_HEADER, FALSE);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        "Content-Type: application/json;charset=utf-8",
+        "Accept: application/json;charset=utf-8",
+        "Content-length: ".strlen($data),
+        "User: $username",
+        "SecretKey: $secretkey",
+    ));
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return array('code'=>$httpCode, 'response' => $response);
+}
+
