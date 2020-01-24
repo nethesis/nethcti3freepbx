@@ -341,7 +341,6 @@ function nethcti3_get_config_early($engine) {
 
     $variables['cftimeout'] = $amp_conf['CFRINGTIMERDEFAULT'];
 
-
     /*********************
     * Extension specific *
     *********************/
@@ -392,12 +391,27 @@ function nethcti3_get_config_early($engine) {
             $sip[$value['keyword']] = $value['data'];
         }
 
+        $user_variables = array();
+        $user_variables['mainextension'] = $mainextension;
+        $user_variables['extension'] = $extension;
         $user_variables['cftimeout'] = $astman->database_get("AMPUSER",$mainextension.'/followme/prering');
-        foreach ($permissions[$ext['profile_id']]['macro_permissions']['settings']['permissions'] as $permission) {
-            if ($permission['name'] == 'dnd') {
-                $user_variables['dnd_allow'] = (string)(int) $permission['value'];
-            } elseif ($permission['name'] == 'call_forward') {
-                $user_variables['fwd_allow'] = (string)(int) $permission['value'];
+
+        // Set dnd and fwd permission from CTI permissions if they exists
+        $user_variables['dnd_allow'] = 1;
+        $user_variables['fwd_allow'] = 1;
+        if (array_key_exists('profile_id',$ext)
+            && is_array($permission)
+            && array_key_exists($ext['profile_id'],$permission)
+            && array_key_exists('macro_permissions',$permissions[$ext['profile_id']])
+            && array_key_exists('settings',$permissions[$ext['profile_id']]['macro_permissions'])
+            && array_key_exists('permissions',$$permissions[$ext['profile_id']]['macro_permissions']['settings']))
+        {
+            foreach ($permissions[$ext['profile_id']]['macro_permissions']['settings']['permissions'] as $permission) {
+                if ($permission['name'] == 'dnd') {
+                    $user_variables['dnd_allow'] = (string)(int) $permission['value'];
+                } elseif ($permission['name'] == 'call_forward') {
+                    $user_variables['fwd_allow'] = (string)(int) $permission['value'];
+                }
             }
         }
         // srtp
@@ -432,7 +446,7 @@ function nethcti3_get_config_early($engine) {
         } else {
             $user_variables['voicemail_number'] = $featurecodes['voicemailmyvoicemail'];
         }
-        $res = nethcti_tancredi_patch($tancrediUrl . 'phones/' . str_replace(':','-',$ext['mac']), $username, $secretkey, $user_variables);
+        $res = nethcti_tancredi_patch($tancrediUrl . 'phones/' . str_replace(':','-',$ext['mac']), $username, $secretkey, array("variables" => $user_variables));
     }
     /***********************************
     * call Tancredi /defaults REST API *
