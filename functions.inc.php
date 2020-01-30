@@ -416,30 +416,30 @@ function nethcti3_get_config_early($engine) {
         }
         // srtp
         if (array_key_exists('media_encryption', $sip) && $sip['media_encryption'] == 'yes') {
-            $user_variables['srtp'] = 1;
+            $user_variables['account_srtp_encryption_1'] = 1;
         } else {
-            $user_variables['srtp'] = 0;
+            $user_variables['account_srtp_encryption_1'] = 0;
         }
         // transport_type
         if (array_key_exists('transport_type', $sip) && strstr($sip['transport_type'], 'tls') !== FALSE) {
-            $user_variables['transport_type'] = 2; // transport = TLS
+            $user_variables['account_transport_type_1'] = 2; // transport = TLS
         } else {
-            $user_variables['transport_type'] = 0; // transport = UDP
+            $user_variables['account_transport_type_1'] = 0; // transport = UDP
         }
 
-        $user_variables['line_active'] = 1;
+        $user_variables['account_line_active_1'] = 1;
         if (array_key_exists('callerid', $sip)) {
-            $user_variables['displayname'] = $sip['callerid'];
+            $user_variables['account_display_name_1'] = $sip['callerid'];
         }
 
-        $user_variables['username'] = $extension;
-        $user_variables['secret'] = $sip['secret'];
-        $user_variables['dtmfmode'] = 1;
+        $user_variables['account_username_1'] = $extension;
+        $user_variables['account_password_1'] = $sip['secret'];
+        $user_variables['account_dtmf_type_1'] = 1;
         if (array_key_exists('dtmfmode',$sip)) {
-            if ($sip['dtmfmode'] == 'inband') $user_variables['dtmf_type'] = 0;
-            elseif ($sip['dtmfmode'] == 'rfc2833') $user_variables['dtmf_type'] = 1;
-            elseif ($sip['dtmfmode'] == 'info') $user_variables['dtmf_type'] = 2;
-            elseif ($sip['dtmfmode'] == 'rfc4733') $user_variables['dtmf_type'] = 3;
+            if ($sip['dtmfmode'] == 'inband') $user_variables['account_dtmf_type_1'] = 0;
+            elseif ($sip['dtmfmode'] == 'rfc2833') $user_variables['account_dtmf_type_1'] = 1;
+            elseif ($sip['dtmfmode'] == 'info') $user_variables['account_dtmf_type_1'] = 2;
+            elseif ($sip['dtmfmode'] == 'rfc4733') $user_variables['account_dtmf_type_1'] = 3;
         }
         if ($extension != $mainextension) {
 	    $user_variables['voicemail_number'] = $featurecodes['voicemaildialvoicemail'].$mainextension;
