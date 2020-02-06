@@ -377,6 +377,7 @@ function nethcti3_get_config_early($engine) {
     $secretkey = sha1($username . $password_sha1 . $secret);
 
     // loop for each physical device
+    $index = 1;
     foreach ($extdata as $ext) {
         $extension = $ext['extension'];
         $mainextension = $ext['mainextension'];
@@ -392,13 +393,13 @@ function nethcti3_get_config_early($engine) {
         }
 
         $user_variables = array();
-        $user_variables['mainextension'] = $mainextension;
-        $user_variables['extension'] = $extension;
-        $user_variables['cftimeout'] = $astman->database_get("AMPUSER",$mainextension.'/followme/prering');
+        $user_variables['mainextension_'.$index] = $mainextension;
+        $user_variables['extension_'.$index] = $extension;
+        $user_variables['cftimeout_'.$index] = $astman->database_get("AMPUSER",$mainextension.'/followme/prering');
 
         // Set dnd and fwd permission from CTI permissions if they exists
-        $user_variables['dnd_allow'] = 1;
-        $user_variables['fwd_allow'] = 1;
+        $user_variables['dnd_allow'] = '1';
+        $user_variables['fwd_allow'] = '1';
         if (array_key_exists('profile_id',$ext)
             && is_array($permission)
             && array_key_exists($ext['profile_id'],$permission)
@@ -408,43 +409,43 @@ function nethcti3_get_config_early($engine) {
         {
             foreach ($permissions[$ext['profile_id']]['macro_permissions']['settings']['permissions'] as $permission) {
                 if ($permission['name'] == 'dnd') {
-                    $user_variables['dnd_allow'] = (string)(int) $permission['value'];
+                    $user_variables['dnd_allow'] = $permission['value'] ? '1' : '';
                 } elseif ($permission['name'] == 'call_forward') {
-                    $user_variables['fwd_allow'] = (string)(int) $permission['value'];
+                    $user_variables['fwd_allow'] = $permission['value'] ? '1' : '';
                 }
             }
         }
         // srtp
         if (array_key_exists('media_encryption', $sip) && $sip['media_encryption'] == 'yes') {
-            $user_variables['account_srtp_encryption_1'] = 1;
+            $user_variables['account_srtp_encryption_1'] = 'optional';
         } else {
-            $user_variables['account_srtp_encryption_1'] = 0;
+            $user_variables['account_srtp_encryption_1'] = 'disabled';
         }
         // transport_type
         if (array_key_exists('transport_type', $sip) && strstr($sip['transport_type'], 'tls') !== FALSE) {
-            $user_variables['account_transport_type_1'] = 2; // transport = TLS
+            $user_variables['account_transport_type_1'] = 'tls'; // transport = TLS
         } else {
-            $user_variables['account_transport_type_1'] = 0; // transport = UDP
+            $user_variables['account_transport_type_1'] = 'udp'; // transport = UDP
         }
 
-        $user_variables['account_line_active_1'] = 1;
+        $user_variables['account_line_active_1'] = '1';
         if (array_key_exists('callerid', $sip)) {
             $user_variables['account_display_name_1'] = $sip['callerid'];
         }
 
         $user_variables['account_username_1'] = $extension;
         $user_variables['account_password_1'] = $sip['secret'];
-        $user_variables['account_dtmf_type_1'] = 1;
+        $user_variables['account_dtmf_type_1'] = 'rfc4733';
         if (array_key_exists('dtmfmode',$sip)) {
-            if ($sip['dtmfmode'] == 'inband') $user_variables['account_dtmf_type_1'] = 0;
-            elseif ($sip['dtmfmode'] == 'rfc2833') $user_variables['account_dtmf_type_1'] = 1;
-            elseif ($sip['dtmfmode'] == 'info') $user_variables['account_dtmf_type_1'] = 2;
-            elseif ($sip['dtmfmode'] == 'rfc4733') $user_variables['account_dtmf_type_1'] = 3;
+            if ($sip['dtmfmode'] == 'inband') $user_variables['account_dtmf_type_1'] = 'inband';
+            elseif ($sip['dtmfmode'] == 'rfc2833') $user_variables['account_dtmf_type_1'] = 'rfc4733';
+            elseif ($sip['dtmfmode'] == 'info') $user_variables['account_dtmf_type_1'] = 'sip_info';
+            elseif ($sip['dtmfmode'] == 'rfc4733') $user_variables['account_dtmf_type_1'] = 'rfc4733';
         }
         if ($extension != $mainextension) {
-	    $user_variables['voicemail_number'] = $featurecodes['voicemaildialvoicemail'].$mainextension;
+	    $user_variables['voicemail_number_'.$index] = $featurecodes['voicemaildialvoicemail'].$mainextension;
         } else {
-            $user_variables['voicemail_number'] = $featurecodes['voicemailmyvoicemail'];
+            $user_variables['voicemail_number_'.$index] = $featurecodes['voicemailmyvoicemail'];
         }
         $res = nethcti_tancredi_patch($tancrediUrl . 'phones/' . str_replace(':','-',$ext['mac']), $username, $secretkey, array("variables" => $user_variables));
     }
