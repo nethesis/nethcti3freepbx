@@ -301,7 +301,6 @@ function nethcti3_get_config_late($engine) {
 
 function nethcti3_get_config_early($engine) {
     include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
-
     // Check proviosioning engine and continue only for Tancredi
     exec("/usr/bin/sudo /sbin/e-smith/config getprop nethvoice ProvisioningEngine", $out);
     if ($out[0] !== 'tancredi') return TRUE;
@@ -320,11 +319,33 @@ function nethcti3_get_config_early($engine) {
         $featurecodes[$featurecode['modulename'].$featurecode['featurename']] = (!empty($featurecode['customcode'])?$featurecode['customcode']:$featurecode['defaultcode']);
     }
 
-    $variables = array();
-
     /***********
     * Defaults *
     ************/
+    $variables = array();
+
+    // Check if PBX is configured for remote access
+    $sql = 'SELECT `variable`,`value` FROM `admin` WHERE `variable` = "cloud"';
+    $stmt = $dbh->prepare($sql);
+    $stmt->execute(array());
+    $res = $stmt->fetchAll(\PDO::FETCH_ASSOC)[0];
+    if ($res['value'] === '1' || $res['value'] === 'true') {
+        // remote
+        // Provisioning url host and scheme
+        $variables['provisioning_url_scheme'] = 'https';
+        $variables['provisioning_url_host'] =  getHostname();
+    } else {
+        // local
+        // Provisioning url scheme
+        $variables['provisioning_url_scheme'] = 'http';
+
+        // get local IP for provisioning url host
+        $sql = 'SELECT `variable`,`value` FROM `admin` WHERE `variable` = "ip"';
+        $stmt = $dbh->prepare($sql);
+        $stmt->execute(array());
+        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC)[0];
+        $variables['provisioning_url_host'] = (is_array($res) && array_key_exists('value',$res) && !empty($res['value'])) ? $res['value'] : getHostname();
+    }
     //featurcodes
     $variables['cftimeouton'] = $featurecodes['callforwardcfuon'];
     $variables['cftimeoutoff'] = $featurecodes['callforwardcfuoff'];
@@ -339,6 +360,7 @@ function nethcti3_get_config_early($engine) {
     $variables['pickup_direct'] = $featurecodes['corepickup'];
     $variables['pickup_group'] = $featurecodes['corepickupexten'];
 
+    // FreePBX settings
     $variables['cftimeout'] = $amp_conf['CFRINGTIMERDEFAULT'];
 
     /*********************
