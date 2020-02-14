@@ -331,11 +331,14 @@ function nethcti3_get_config_early($engine) {
     $res = $stmt->fetchAll(\PDO::FETCH_ASSOC)[0];
     if ($res['value'] === '1' || $res['value'] === 'true') {
         // remote
+        $isCloud = TRUE;
         // Provisioning url host and scheme
         $variables['provisioning_url_scheme'] = 'https';
-        $variables['provisioning_url_host'] =  getHostname();
+        $localip = gethostname();
+        $variables['provisioning_url_host'] = $localip;
     } else {
         // local
+        $isCloud = FALSE;
         // Provisioning url scheme
         $variables['provisioning_url_scheme'] = 'http';
 
@@ -344,7 +347,8 @@ function nethcti3_get_config_early($engine) {
         $stmt = $dbh->prepare($sql);
         $stmt->execute(array());
         $res = $stmt->fetchAll(\PDO::FETCH_ASSOC)[0];
-        $variables['provisioning_url_host'] = (is_array($res) && array_key_exists('value',$res) && !empty($res['value'])) ? $res['value'] : getHostname();
+        $localip = (is_array($res) && array_key_exists('value',$res) && !empty($res['value'])) ? $res['value'] : gethostname();
+        $variables['provisioning_url_host'] = $localip;
     }
     //featurcodes
     $variables['cftimeouton'] = $featurecodes['callforwardcfuon'];
@@ -444,10 +448,14 @@ function nethcti3_get_config_early($engine) {
             $user_variables['account_srtp_encryption_1'] = 'disabled';
         }
         // transport_type
-        if (array_key_exists('transport_type', $sip) && strstr($sip['transport_type'], 'tls') !== FALSE) {
+        if ((array_key_exists('transport_type', $sip) && strstr($sip['transport_type'], 'tls') !== FALSE) || $isCloud) {
             $user_variables['account_transport_type_1'] = 'tls'; // transport = TLS
+            $user_variables['account_server_host_1'] = gethostname();
+            $user_variables['account_server_port_1'] = FreePBX::create()->Sipsettings->getConfig('tlsport-0.0.0.0');
         } else {
             $user_variables['account_transport_type_1'] = 'udp'; // transport = UDP
+            $user_variables['account_server_host_1'] = $localip;
+            $user_variables['account_server_port_1'] = FreePBX::create()->Sipsettings->getConfig('udpport-0.0.0.0');
         }
 
         $user_variables['account_line_active_1'] = '1';
