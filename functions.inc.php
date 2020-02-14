@@ -442,8 +442,12 @@ function nethcti3_get_config_early($engine) {
             }
         }
         // srtp
-        if (array_key_exists('media_encryption', $sip) && $sip['media_encryption'] == 'yes') {
-            $user_variables['account_srtp_encryption_1'] = 'optional';
+        if (array_key_exists('media_encryption', $sip) && ( $sip['media_encryption'] == 'sdes' || $sip['media_encryption'] == 'dtls')) {
+            if (array_key_exists('media_encryption_optimistic', $sip) && $sip['media_encryption_optimistic'] == 'no') {
+                $user_variables['account_srtp_encryption_1'] = 'compulsory';
+            } else {
+                $user_variables['account_srtp_encryption_1'] = 'optional';
+            }
         } else {
             $user_variables['account_srtp_encryption_1'] = 'disabled';
         }
