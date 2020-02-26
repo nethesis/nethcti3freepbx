@@ -465,7 +465,9 @@ function nethcti3_get_config_early($engine) {
 
         $user_variables['account_line_active_1'] = '1';
         if (array_key_exists('callerid', $sip)) {
-            $user_variables['account_display_name_1'] = $sip['callerid'];
+            $user_variables['account_display_name_1'] = preg_replace('/<[0-9]*>$/', "<$mainextension>", $sip['callerid']);
+        } else {
+            $user_variables['account_display_name_1'] = "<$mainextension>";
         }
 
         $user_variables['account_username_1'] = $extension;
