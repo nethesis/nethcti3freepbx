@@ -359,6 +359,7 @@ function nethcti3_get_config_early($engine) {
     $variables['cfalwayson'] = $featurecodes['callforwardcfon'];
     $variables['dndoff'] = $featurecodes['donotdisturbdnd_off'];
     $variables['dndon'] = $featurecodes['donotdisturbdnd_on'];
+    $variables['dndtoggle'] = $featurecodes['donotdisturbdnd_toggle'];
     $variables['call_waiting_off'] = $featurecodes['callwaitingcwoff'];
     $variables['call_waiting_on'] = $featurecodes['callwaitingcwon'];
     $variables['pickup_direct'] = $featurecodes['corepickup'];
