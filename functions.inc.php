@@ -444,23 +444,9 @@ function nethcti3_get_config_early($engine) {
         }
         // srtp
         if (array_key_exists('media_encryption', $sip) && ( $sip['media_encryption'] == 'sdes' || $sip['media_encryption'] == 'dtls')) {
-            if (array_key_exists('media_encryption_optimistic', $sip) && $sip['media_encryption_optimistic'] == 'no') {
-                $user_variables['account_srtp_encryption_1'] = 'compulsory';
-            } else {
-                $user_variables['account_srtp_encryption_1'] = 'optional';
-            }
+            $user_variables['account_encryption_1'] = '1';
         } else {
-            $user_variables['account_srtp_encryption_1'] = 'disabled';
-        }
-        // transport_type
-        if ((array_key_exists('transport_type', $sip) && strstr($sip['transport_type'], 'tls') !== FALSE) || $isCloud) {
-            $user_variables['account_transport_type_1'] = 'tls'; // transport = TLS
-            $user_variables['account_server_host_1'] = gethostname();
-            $user_variables['account_server_port_1'] = FreePBX::create()->Sipsettings->getConfig('tlsport-0.0.0.0');
-        } else {
-            $user_variables['account_transport_type_1'] = 'udp'; // transport = UDP
-            $user_variables['account_server_host_1'] = $localip;
-            $user_variables['account_server_port_1'] = FreePBX::create()->Sipsettings->getConfig('udpport-0.0.0.0');
+            $user_variables['account_encryption_1'] = '';
         }
 
         $user_variables['account_line_active_1'] = '1';
