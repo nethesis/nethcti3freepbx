@@ -324,32 +324,6 @@ function nethcti3_get_config_early($engine) {
     ************/
     $variables = array();
 
-    // Check if PBX is configured for remote access
-    $sql = 'SELECT `variable`,`value` FROM `admin` WHERE `variable` = "cloud"';
-    $stmt = $dbh->prepare($sql);
-    $stmt->execute(array());
-    $res = $stmt->fetchAll(\PDO::FETCH_ASSOC)[0];
-    if ($res['value'] === '1' || $res['value'] === 'true') {
-        // remote
-        $isCloud = TRUE;
-        // Provisioning url host and scheme
-        $variables['provisioning_url_scheme'] = 'https';
-        $localip = gethostname();
-        $variables['provisioning_url_host'] = $localip;
-    } else {
-        // local
-        $isCloud = FALSE;
-        // Provisioning url scheme
-        $variables['provisioning_url_scheme'] = 'http';
-
-        // get local IP for provisioning url host
-        $sql = 'SELECT `variable`,`value` FROM `admin` WHERE `variable` = "ip"';
-        $stmt = $dbh->prepare($sql);
-        $stmt->execute(array());
-        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC)[0];
-        $localip = (is_array($res) && array_key_exists('value',$res) && !empty($res['value'])) ? $res['value'] : gethostname();
-        $variables['provisioning_url_host'] = $localip;
-    }
     //featurcodes
     $variables['cftimeouton'] = $featurecodes['callforwardcfuon'];
     $variables['cftimeoutoff'] = $featurecodes['callforwardcfuoff'];
