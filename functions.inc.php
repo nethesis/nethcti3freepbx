@@ -463,7 +463,6 @@ function nethcti3_get_config_early($engine) {
             $user_variables['account_server_port_1'] = FreePBX::create()->Sipsettings->getConfig('udpport-0.0.0.0');
         }
 
-        $user_variables['account_line_active_1'] = '1';
         if (array_key_exists('callerid', $sip)) {
             $user_variables['account_display_name_1'] = preg_replace('/<[0-9]*>$/', "<$mainextension>", $sip['callerid']);
         } else {
