@@ -324,32 +324,6 @@ function nethcti3_get_config_early($engine) {
     ************/
     $variables = array();
 
-    // Check if PBX is configured for remote access
-    $sql = 'SELECT `variable`,`value` FROM `admin` WHERE `variable` = "cloud"';
-    $stmt = $dbh->prepare($sql);
-    $stmt->execute(array());
-    $res = $stmt->fetchAll(\PDO::FETCH_ASSOC)[0];
-    if ($res['value'] === '1' || $res['value'] === 'true') {
-        // remote
-        $isCloud = TRUE;
-        // Provisioning url host and scheme
-        $variables['provisioning_url_scheme'] = 'https';
-        $localip = gethostname();
-        $variables['provisioning_url_host'] = $localip;
-    } else {
-        // local
-        $isCloud = FALSE;
-        // Provisioning url scheme
-        $variables['provisioning_url_scheme'] = 'http';
-
-        // get local IP for provisioning url host
-        $sql = 'SELECT `variable`,`value` FROM `admin` WHERE `variable` = "ip"';
-        $stmt = $dbh->prepare($sql);
-        $stmt->execute(array());
-        $res = $stmt->fetchAll(\PDO::FETCH_ASSOC)[0];
-        $localip = (is_array($res) && array_key_exists('value',$res) && !empty($res['value'])) ? $res['value'] : gethostname();
-        $variables['provisioning_url_host'] = $localip;
-    }
     //featurcodes
     $variables['cftimeouton'] = $featurecodes['callforwardcfuon'];
     $variables['cftimeoutoff'] = $featurecodes['callforwardcfuoff'];
@@ -444,23 +418,9 @@ function nethcti3_get_config_early($engine) {
         }
         // srtp
         if (array_key_exists('media_encryption', $sip) && ( $sip['media_encryption'] == 'sdes' || $sip['media_encryption'] == 'dtls')) {
-            if (array_key_exists('media_encryption_optimistic', $sip) && $sip['media_encryption_optimistic'] == 'no') {
-                $user_variables['account_srtp_encryption_1'] = 'compulsory';
-            } else {
-                $user_variables['account_srtp_encryption_1'] = 'optional';
-            }
+            $user_variables['account_encryption_1'] = '1';
         } else {
-            $user_variables['account_srtp_encryption_1'] = 'disabled';
-        }
-        // transport_type
-        if ((array_key_exists('transport_type', $sip) && strstr($sip['transport_type'], 'tls') !== FALSE) || $isCloud) {
-            $user_variables['account_transport_type_1'] = 'tls'; // transport = TLS
-            $user_variables['account_server_host_1'] = gethostname();
-            $user_variables['account_server_port_1'] = FreePBX::create()->Sipsettings->getConfig('tlsport-0.0.0.0');
-        } else {
-            $user_variables['account_transport_type_1'] = 'udp'; // transport = UDP
-            $user_variables['account_server_host_1'] = $localip;
-            $user_variables['account_server_port_1'] = FreePBX::create()->Sipsettings->getConfig('udpport-0.0.0.0');
+            $user_variables['account_encryption_1'] = '';
         }
 
         if (array_key_exists('callerid', $sip)) {
