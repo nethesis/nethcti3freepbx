@@ -24,7 +24,7 @@ include_once '/etc/freepbx_db.conf';
 define("AGIBIN_DIR", "/var/lib/asterisk/agi-bin");
 include(AGIBIN_DIR."/phpagi.php");
 $agi = new AGI();
-$call_id = $agi_uniqueid;
+$call_id = $agi->request['agi_uniqueid'];
 
 # read extension from argv
 $ext_string = get_var($agi, 'ARG3');
