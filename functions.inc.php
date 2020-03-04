@@ -305,7 +305,6 @@ function nethcti3_get_config_early($engine) {
     exec("/usr/bin/sudo /sbin/e-smith/config getprop nethvoice ProvisioningEngine", $out);
     if ($out[0] !== 'tancredi') return TRUE;
 
-    global $astman;
     global $amp_conf;
     // Call Tancredi API to set variables that needs to be set on FreePBX retrieve conf
     // get featurecodes
@@ -378,7 +377,6 @@ function nethcti3_get_config_early($engine) {
     $secretkey = sha1($username . $password_sha1 . $secret);
 
     // loop for each physical device
-    $index = 1;
     foreach ($extdata as $ext) {
         $extension = $ext['extension'];
         $mainextension = $ext['mainextension'];
@@ -394,13 +392,11 @@ function nethcti3_get_config_early($engine) {
         }
 
         $user_variables = array();
-        $user_variables['mainextension_'.$index] = $mainextension;
-        $user_variables['extension_'.$index] = $extension;
-        $user_variables['cftimeout_'.$index] = $astman->database_get("AMPUSER",$mainextension.'/followme/prering');
+        $user_variables['account_extension_1'] = $extension;
 
         // Set dnd and fwd permission from CTI permissions if they exists
-        $user_variables['dnd_allow'] = '1';
-        $user_variables['fwd_allow'] = '1';
+        $user_variables['account_dnd_allow_1'] = '1';
+        $user_variables['account_fwd_allow_1'] = '1';
         if (array_key_exists('profile_id',$ext)
             && is_array($permission)
             && array_key_exists($ext['profile_id'],$permission)
@@ -410,9 +406,9 @@ function nethcti3_get_config_early($engine) {
         {
             foreach ($permissions[$ext['profile_id']]['macro_permissions']['settings']['permissions'] as $permission) {
                 if ($permission['name'] == 'dnd') {
-                    $user_variables['dnd_allow'] = $permission['value'] ? '1' : '';
+                    $user_variables['account_dnd_allow_1'] = $permission['value'] ? '1' : '';
                 } elseif ($permission['name'] == 'call_forward') {
-                    $user_variables['fwd_allow'] = $permission['value'] ? '1' : '';
+                    $user_variables['account_fwd_allow_1'] = $permission['value'] ? '1' : '';
                 }
             }
         }
@@ -439,9 +435,9 @@ function nethcti3_get_config_early($engine) {
             elseif ($sip['dtmfmode'] == 'rfc4733') $user_variables['account_dtmf_type_1'] = 'rfc4733';
         }
         if ($extension != $mainextension) {
-	    $user_variables['voicemail_number_'.$index] = $featurecodes['voicemaildialvoicemail'].$mainextension;
+            $user_variables['account_voicemail_1'] = $featurecodes['voicemaildialvoicemail'].$mainextension;
         } else {
-            $user_variables['voicemail_number_'.$index] = $featurecodes['voicemailmyvoicemail'];
+            $user_variables['account_voicemail_1'] = $featurecodes['voicemailmyvoicemail'];
         }
         $res = nethcti_tancredi_patch($tancrediUrl . 'phones/' . str_replace(':','-',$ext['mac']), $username, $secretkey, array("variables" => $user_variables));
     }
