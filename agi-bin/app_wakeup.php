@@ -83,12 +83,6 @@ foreach ($results as $result) {
     $extension = $result['extension'];
     $agi->verbose("username = $username");
 
-    // check if extension is already registered
-    if (get_var($agi,"EXTENSION_STATE($extension)") == "NOT_INUSE") {
-        $agi->verbose("extension $extension is available");
-        continue;
-    }
-
     // Call notification service
     $data = array(
         "AuthKey" => "b2eb0b53-3247-436f-ab95-33aeea803ebb",
