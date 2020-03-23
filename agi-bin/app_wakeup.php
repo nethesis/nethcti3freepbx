@@ -76,6 +76,14 @@ if (empty($results)) {
     exit(0);
 }
 
+// Get credentials for notification server
+exec("/usr/bin/sudo /sbin/e-smith/config getprop subscription SystemId", $tmp);
+$lk = $tmp[0];
+unset($tmp);
+exec("/usr/bin/sudo /sbin/e-smith/config getprop subscription Secret", $tmp);
+$secret = $tmp[0];
+unset($tmp);
+
 // Wake up extensions
 $extensions_to_wake = array();
 $request_errors = array();
@@ -86,7 +94,6 @@ foreach ($results as $result) {
 
     // Call notification service
     $data = array(
-        "AuthKey" => "b2eb0b53-3247-436f-ab95-33aeea803ebb",
         "ApplicationKey" => "NETHCTI_APP",
         "Message" => "",
         "TypeMessage" => 2,
@@ -98,9 +105,10 @@ foreach ($results as $result) {
     );
     $data = json_encode($data);
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "http://notificatore.apexnet.it/NotificaPush");
+    curl_setopt($ch, CURLOPT_URL, "http://pp.nethserver.net/NotificaPush");
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_USERPWD, $lk . ':' . $secret);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
         "Content-Type: application/json",
         "X-HTTP-Method-Override: SendPush",
