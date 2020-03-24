@@ -58,7 +58,7 @@ foreach ($extensions as $extension) {
     $devices = array_merge($devices,explode('&',$device));
 }
 $devices = array_unique($devices,SORT_REGULAR);
-# get user for the extensions in 
+// Get users for the extensions
 $query_parts = array();
 foreach ($devices as $device) {
     $query_parts[] = '(rest_devices_phones.extension = ?  AND rest_devices_phones.type = "mobile")';
@@ -72,7 +72,6 @@ $results = $sth->fetchAll(\PDO::FETCH_ASSOC);
 if (empty($results)) {
     // There aren't mobile extensions
     $agi->verbose('No mobile extensions in '.implode(',',$devices));
-    //echo('No mobile extensions in ['.implode(',',$extensions)."]\n");
     exit(0);
 }
 
@@ -84,6 +83,7 @@ exec("/usr/bin/sudo /sbin/e-smith/config getprop subscription Secret", $tmp);
 $secret = $tmp[0];
 unset($tmp);
 
+// Wake up extensions
 $extensions_to_wake = array();
 $request_errors = array();
 foreach ($results as $result) {
@@ -107,7 +107,7 @@ foreach ($results as $result) {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "https://pp.nethserver.net/NotificaPush");
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); #TODO: remove
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
     curl_setopt($ch, CURLOPT_USERPWD, $lk . ':' . $secret);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
@@ -127,9 +127,10 @@ foreach ($results as $result) {
     }
 }
 
+// Wait a standard 1 second timeout
 usleep(1000000); // sleep for 1 second
 
-// wait for extension to register
+// Wait for extension to register
 for ($i = 0; $i<10 ; $i++) {
     usleep(500000); // sleep for 0.5 seconds
     foreach ($extensions_to_wake as $index => $ext) {
@@ -143,7 +144,7 @@ for ($i = 0; $i<10 ; $i++) {
         exit(0);
     }
 }
-//Timeout
+// Timeout
 $agi->verbose("extension(s) ".implode(',',$extensions_to_wake)." not available, timeout");
 exit(0);
 
@@ -155,3 +156,4 @@ function get_var( $agi, $value) {
         }
         return '';
 }
+
