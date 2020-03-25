@@ -26,11 +26,11 @@ include(AGIBIN_DIR."/phpagi.php");
 $agi = new AGI();
 $call_id = $agi->request['agi_uniqueid'];
 
-# read extension from argv
+// Read extension from argv
 $ext_string = get_var($agi, 'ARG3');
 $extensions = explode('-',$ext_string);
 
-// check CF
+// Check CF
 foreach ($extensions as $extension) {
     $cf = $agi->database_get('CF',$extension);
     $cf = $cf['data'];
@@ -40,7 +40,7 @@ foreach ($extensions as $extension) {
 }
 $extensions = array_unique($extensions,SORT_REGULAR);
 
-// check DND
+// Check DND
 foreach ($extensions as $index => $extension) {
     $dnd = $agi->database_get('DND',$extension);
     $dnd = $dnd['data'];
@@ -58,12 +58,12 @@ foreach ($extensions as $extension) {
     $devices = array_merge($devices,explode('&',$device));
 }
 $devices = array_unique($devices,SORT_REGULAR);
+
 // Get users for the extensions
 $query_parts = array();
 foreach ($devices as $device) {
     $query_parts[] = '(rest_devices_phones.extension = ?  AND rest_devices_phones.type = "mobile")';
 }
-
 $query = 'SELECT DISTINCT userman_users.username,rest_devices_phones.extension FROM userman_users JOIN rest_devices_phones on userman_users.id = rest_devices_phones.user_id WHERE ';
 $query .= implode(' OR ',$query_parts);
 $sth = $db->prepare($query);
@@ -144,6 +144,7 @@ for ($i = 0; $i<10 ; $i++) {
         exit(0);
     }
 }
+
 // Timeout
 $agi->verbose("extension(s) ".implode(',',$extensions_to_wake)." not available, timeout");
 exit(0);
