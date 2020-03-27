@@ -105,9 +105,8 @@ foreach ($results as $result) {
     );
     $data = json_encode($data);
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://pp.nethserver.net/NotificaPush");
+    curl_setopt($ch, CURLOPT_URL, "https://pp.nethesis.it/NotificaPush");
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); #TODO: remove
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
     curl_setopt($ch, CURLOPT_USERPWD, $lk . ':' . $secret);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
