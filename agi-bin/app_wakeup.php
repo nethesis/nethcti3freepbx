@@ -93,8 +93,6 @@ foreach ($results as $result) {
 
     // Call notification service
     $data = array(
-        "AuthKey" => "b2eb0b53-3247-436f-ab95-33aeea803ebb",
-        "ApplicationKey" => "NETHCTI_APP",
         "Message" => "",
         "TypeMessage" => 2,
         "UserName" => $username.'@'.gethostname(),
@@ -111,7 +109,7 @@ foreach ($results as $result) {
     curl_setopt($ch, CURLOPT_USERPWD, $lk . ':' . $secret);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
         "Content-Type: application/json",
-        "X-HTTP-Method-Override: SendPush",
+        "X-HTTP-Method-Override: SendPushAuth",
         "Content-length: ".strlen($data),
         ));
     $response = curl_exec($ch);
