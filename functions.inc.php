@@ -29,7 +29,7 @@ function nethcti3_get_config($engine) {
             /*Configure conference*/
             $defaultVal = $amp_conf['ASTCONFAPP'];
             $amp_conf['ASTCONFAPP'] = 'app_meetme';
-            $query='SELECT IF(customcode="",defaultcode,customcode) as defaultcode FROM featurecodes WHERE modulename="nethcti3" AND featurename="meetme_conf"';
+            $query='SELECT IF(customcode IS NULL OR customcode = "",defaultcode,customcode) as defaultcode FROM featurecodes WHERE modulename="nethcti3" AND featurename="meetme_conf"';
             $conf_code=$db->getOne($query);
             if (isset($conf_code) && $conf_code != '') {
                 $exten='_'.$conf_code.'X.';
