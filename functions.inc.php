@@ -340,7 +340,7 @@ function nethcti3_get_config_early($engine) {
     $variables['call_waiting_on'] = $featurecodes['callwaitingcwon'];
     $variables['pickup_direct'] = $featurecodes['corepickup'];
     $variables['pickup_group'] = $featurecodes['corepickupexten'];
-    $variables['queuetoggle'] = $featurecodes['que_toggle'];
+    $variables['queuetoggle'] = $featurecodes['queuesque_toggle'];
 
     // FreePBX settings
     $variables['cftimeout'] = $amp_conf['CFRINGTIMERDEFAULT'];
