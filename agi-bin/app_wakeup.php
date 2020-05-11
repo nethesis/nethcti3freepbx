@@ -98,7 +98,7 @@ foreach ($results as $result) {
     );
     $data = json_encode($data);
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://pp.nethesis.it/NotificaPush");
+    curl_setopt($ch, CURLOPT_URL, $serverCredentials['NotificationServerURL']);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
     curl_setopt($ch, CURLOPT_USERPWD, $serverCredentials['SystemId'] . ':' . $serverCredentials['Secret']);
