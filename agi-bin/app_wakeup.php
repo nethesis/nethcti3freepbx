@@ -76,12 +76,15 @@ if (empty($results)) {
 }
 
 // Get credentials for notification server
-exec("/usr/bin/sudo /sbin/e-smith/config getprop subscription SystemId", $tmp);
-$lk = $tmp[0];
-unset($tmp);
-exec("/usr/bin/sudo /sbin/e-smith/config getprop subscription Secret", $tmp);
-$secret = $tmp[0];
-unset($tmp);
+try {
+    $serverCredentials = json_decode(file_get_contents('/etc/asterisk/nethcti_push_configuration.json'));
+    if (is_null($serverCredentials)) {
+        Throw new Exception('Error reading server configuration file');
+    }
+} catch (Exception $e) {
+    $agi->verbose($e->getMessage());
+    exit(1);
+}
 
 // Wake up extensions
 $extensions_to_wake = array();
@@ -95,7 +98,7 @@ foreach ($results as $result) {
     $data = array(
         "Message" => "",
         "TypeMessage" => 2,
-        "UserName" => $username.'@'.gethostname(),
+        "UserName" => $username.'@'.$serverCredentials['Host'],
         "Sound" => "",
         "Badge" => 0,
         "CustomField1" => "IC_MSG",
@@ -103,10 +106,10 @@ foreach ($results as $result) {
     );
     $data = json_encode($data);
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://pp.nethesis.it/NotificaPush");
+    curl_setopt($ch, CURLOPT_URL, $serverCredentials['NotificationServerURL']);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
     curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-    curl_setopt($ch, CURLOPT_USERPWD, $lk . ':' . $secret);
+    curl_setopt($ch, CURLOPT_USERPWD, $serverCredentials['SystemId'] . ':' . $serverCredentials['Secret']);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
         "Content-Type: application/json",
         "X-HTTP-Method-Override: SendPushAuth",
