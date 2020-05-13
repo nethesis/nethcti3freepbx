@@ -76,7 +76,15 @@ if (empty($results)) {
 }
 
 // Get credentials for notification server
-$serverCredentials = json_decode(file_get_contents('/etc/asterisk/nethcti_push_configuration.json'));
+try {
+    $serverCredentials = json_decode(file_get_contents('/etc/asterisk/nethcti_push_configuration.json'));
+    if (is_null($serverCredentials)) {
+        Throw new Exception('Error reading server configuration file');
+    }
+} catch (Exception $e) {
+    $agi->verbose($e->getMessage());
+    exit(1);
+}
 
 // Wake up extensions
 $extensions_to_wake = array();
