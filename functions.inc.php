@@ -94,7 +94,8 @@ function nethcti3_get_config_late($engine) {
                     $pricid = false;
                 }
                 $context = ($pricid) ? "ext-did-0001":"ext-did-0002";
-                $ext->splice($context, $exten, "did-cid-hook", new ext_agi('offhour.php,'.$did['cidnum'].','.$did['extension']),'offhour',2);
+                $ext->splice($context, $exten, "did-cid-hook", new ext_userevent('CallIn', 'value: ${FROM_DID}'),'cti-event',2);
+                $ext->splice($context, $exten, "did-cid-hook", new ext_agi('offhour.php,'.$did['cidnum'].','.$did['extension']),'offhour',3);
             }
             /* Add wakeup for App*/
             $ext->splice('macro-dial-one', 's','setexttocall', new ext_agi('/var/lib/asterisk/agi-bin/app_wakeup.php'));
