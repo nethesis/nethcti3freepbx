@@ -77,7 +77,7 @@ if (empty($results)) {
 
 // Get credentials for notification server
 try {
-    $serverCredentials = json_decode(file_get_contents('/etc/asterisk/nethcti_push_configuration.json'));
+    $serverCredentials = json_decode(file_get_contents('/etc/asterisk/nethcti_push_configuration.json'),TRUE);
     if (is_null($serverCredentials)) {
         Throw new Exception('Error reading server configuration file');
     }
