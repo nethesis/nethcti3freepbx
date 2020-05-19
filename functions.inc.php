@@ -29,10 +29,13 @@ function nethcti3_get_config($engine) {
             /*Configure conference*/
             $defaultVal = $amp_conf['ASTCONFAPP'];
             $amp_conf['ASTCONFAPP'] = 'app_meetme';
-            $query='SELECT IF(customcode IS NULL OR customcode = "",defaultcode,customcode) as defaultcode FROM featurecodes WHERE modulename="nethcti3" AND featurename="meetme_conf"';
-            $conf_code=$db->getOne($query);
-            if (isset($conf_code) && $conf_code != '') {
-                $exten='_'.$conf_code.'X.';
+            $query='SELECT featurename,IF(customcode IS NULL OR customcode = "",defaultcode,customcode) as defaultcode FROM featurecodes WHERE modulename="nethcti3" AND ( featurename="meetme_conf" OR featurename="incall_audio" ) ';
+            $codes = array();
+            foreach ($db->getAll($query) as $feature) {
+                $codes[$feature[0]] = $feature[1];
+            }
+            if (isset($codes['meetme_conf']) && $codes['meetme_conf'] != '') {
+                $exten='_'.$codes['meetme_conf'].'X.';
                 $exten2=$conf_code;
                 $context='cti-conference';
                 $ext->addInclude('from-internal-additional', $context);
@@ -41,15 +44,28 @@ function nethcti3_get_config($engine) {
                 $ext->splice($context, $exten, 'n', new ext_playback('beep'));
                 $ext->splice($context, $exten, 'n', new ext_meetme('${EXTEN}', '1dMw'));
                 $ext->splice($context, $exten, 'n', new ext_hangup());
-
                 $ext->add($context, $exten2, '', new ext_noop('conference'));
                 $ext->splice($context, $exten2, 'n', new ext_answer());
                 $ext->splice($context, $exten2, 'n', new ext_playback('beep'));
                 $ext->splice($context, $exten2, 'n', new ext_meetme('${EXTEN}${CALLERID(number)}', '1dMA'));
                 $ext->splice($context, $exten2, 'n', new ext_hangup());
-
                 $ext->add($context, 'h', '', new ext_hangup());
                 $amp_conf['ASTCONFAPP'] = $defaultVal;
+            }
+            if (isset($codes['incall_audio']) && $codes['incall_audio'] != '') {
+                $exten='_'.$codes['incall_audio'].'.';
+                $context='incall-audio-spy';
+                $ext->add($context, $exten, '', new ext_noop('Incall Audio Spy'));
+                $ext->add($context, $exten, '', new ext_set('CHANNEL(language)','${MASTER_CHANNEL(CHANNEL(language))'));
+                $ext->add($context, $exten, '', new ext_answer());
+                $ext->add($context, $exten, '', new ext_chanspy('PJSIP/${EXTEN:4},Bqs'));
+
+                $exten2='_X.';
+                $context2='incall-audio-play';
+                $ext->add($context2, $exten2, '', new ext_noop('Incall Audio Play'));
+                $ext->add($context2, $exten2, '', new ext_playback('beep'));
+                $ext->add($context2, $exten2, '', new ext_playback('nethcti/incall_audio/file-${EXTEN}'));
+                $ext->add($context2, $exten2, '', new ext_hangup());
             }
             /*Intra company routes context*/
             $context='from-intracompany';
