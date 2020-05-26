@@ -374,7 +374,7 @@ function nethcti3_get_config_early($engine) {
                 rest_users.profile_id
             FROM
                 rest_devices_phones JOIN userman_users ON rest_devices_phones.user_id = userman_users.id
-                JOIN rest_users ON rest_devices_phones.user_id = rest_users.user_id
+                LEFT JOIN rest_users ON rest_devices_phones.user_id = rest_users.user_id
             WHERE rest_devices_phones.type = "physical"';
     $stmt = $dbh->prepare($sql);
     $stmt->execute(array());
