@@ -36,7 +36,7 @@ function nethcti3_get_config($engine) {
             }
             if (isset($codes['meetme_conf']) && $codes['meetme_conf'] != '') {
                 $exten='_'.$codes['meetme_conf'].'X.';
-                $exten2=$conf_code;
+                $exten2=$codes['meetme_conf'];
                 $context='cti-conference';
                 $ext->addInclude('from-internal-additional', $context);
                 $ext->add($context, $exten, '', new ext_noop('conference'));
