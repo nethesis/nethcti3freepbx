@@ -499,7 +499,6 @@ function nethvoice_report_config($users) {
     include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
     // Add special X user for API access
     $config = array(array("username" => "X", "queues" => array(), "groups" => array(), "agents" => array()));
-    $nethcti3 = \FreePBX::Nethcti3();
     $groups = getCTIGroups();
     $queues = array();
     $ext2user = array();
