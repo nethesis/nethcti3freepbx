@@ -521,6 +521,10 @@ function nethvoice_report_config($users) {
         }
     }
 
+    // Prepare extenstion to username map
+    foreach ($users as $u) {
+        $ext2user[$u["default_extension"]] = $u["username"];
+    }
 
     // Analize each CTI user
     foreach ($users as $u) {
