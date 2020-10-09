@@ -310,6 +310,10 @@ function nethcti3_get_config_late($engine) {
         if ($res === FALSE) {
             error_log('fail to write streaming config');
         }
+
+        // Generate nethvoice report based on NethCTI configuration
+        nethvoice_report_config($users);
+
         //Move provisioning files from /var/lib/tftpnethvoice to /var/lib/tftpboot
         system("/usr/bin/sudo /usr/bin/scl enable rh-php56 -- php /var/www/html/freepbx/rest/lib/moveProvisionFiles.php");
         //Reload CTI
@@ -491,3 +495,60 @@ function nethcti_tancredi_patch($url, $username, $secretkey, $data) {
     return array('code'=>$httpCode, 'response' => $response);
 }
 
+function nethvoice_report_config($users) {
+    include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
+    // Add special X user for API access
+    $config = array(array("username" => "X", "queues" => array(), "groups" => array(), "agents" => array()));
+    $nethcti3 = \FreePBX::Nethcti3();
+    $groups = getCTIGroups();
+    $queues = array();
+    $ext2user = array();
+
+    // Prepare queue details
+    foreach (\FreePBX::Queues()->listQueues() as $q) {
+        $queue_details = queues_get($q[0]);
+        $queues[$q[0]] = array();
+        foreach (explode(PHP_EOL,$queue_details['dynmembers']) as $m) {
+            // $m format is 201,0
+            $tmp = explode(",",$m);
+            $queues[$q[0]][] = $tmp[0];
+        }
+        foreach($queue_details['member'] as $m) {
+            // $m format Local/200@from-queue/n,0
+            $tmp = explode("@",$m);
+            $tmp = explode("/",$tmp[0]);
+            $queues[$q[0]][] = $tmp[1];
+        }
+    }
+
+
+    // Analize each CTI user
+    foreach ($users as $u) {
+        $ext2user[$u["default_extension"]] = $u["username"];
+        $user = array("username" => $u["username"], "queues" => array(), "groups" => array(), "agents" => array());
+        foreach ($groups as $group) {
+            if ($group["username"] ==  $user["username"]) {
+                $user["groups"][] = $group["name"];
+            }
+        }
+
+        foreach ($queues as $q => $members) {
+            if (in_array($u["default_extension"], $members)) {
+                $user["queues"][] = $q;
+                // map agents extensions to names
+                foreach ($members as $m) {
+                    if (isset($ext2user[$m]) && $ext2user[$m] != $user['username']) {
+                        $user["agents"][] = $ext2user[$m];
+                    }
+                }
+            }
+        }
+
+        $config[] = $user;
+    }
+
+    // Write the file
+    if (file_put_contents("/opt/nethvoice-report/api/user_authorizations.json", json_encode($config)) === false) {
+        error_log("Can't write 'user_authorizations.json' file");
+    }
+}
