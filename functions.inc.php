@@ -537,7 +537,7 @@ function nethvoice_report_config($users) {
 
         foreach ($queues as $q => $members) {
             if (in_array($u["default_extension"], $members)) {
-                $user["queues"][] = $q;
+                $user["queues"][] = strval($q);
                 // map agents extensions to names
                 foreach ($members as $m) {
                     if (isset($ext2user[$m]) && $ext2user[$m] != $user['username']) {
