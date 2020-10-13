@@ -497,6 +497,12 @@ function nethcti_tancredi_patch($url, $username, $secretkey, $data) {
 
 function nethvoice_report_config($users) {
     include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
+
+    # skip execution if nethvoice-report is not installed
+    if (!is_dir("/opt/nethvoice-report/api/")) {
+        return;
+    }
+
     // Add special X user for API access
     $config = array(array("username" => "X", "queues" => array(), "groups" => array(), "agents" => array()));
     $groups = getCTIGroups();
