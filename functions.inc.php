@@ -312,7 +312,7 @@ function nethcti3_get_config_late($engine) {
         }
 
         // Generate nethvoice report based on NethCTI configuration
-        nethvoice_report_config($users);
+        nethvoice_report_config();
 
         //Move provisioning files from /var/lib/tftpnethvoice to /var/lib/tftpboot
         system("/usr/bin/sudo /usr/bin/scl enable rh-php56 -- php /var/www/html/freepbx/rest/lib/moveProvisionFiles.php");
@@ -495,7 +495,7 @@ function nethcti_tancredi_patch($url, $username, $secretkey, $data) {
     return array('code'=>$httpCode, 'response' => $response);
 }
 
-function nethvoice_report_config($users) {
+function nethvoice_report_config() {
     include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
 
     # skip execution if nethvoice-report is not installed
@@ -503,11 +503,50 @@ function nethvoice_report_config($users) {
         return;
     }
 
-    // Add special X user for API access
-    $config = array(array("username" => "X", "queues" => array(), "groups" => array(), "agents" => array()));
-    $groups = getCTIGroups();
+    $fbx_users = \FreePBX::create()->Userman->getAllUsers();
+    $dbh = \FreePBX::Database();
+    $users = array();
     $queues = array();
     $ext2user = array();
+
+    foreach ($fbx_users as $user) {
+        if ($user['default_extension'] !== 'none') {
+
+            // Retrieve profile id
+            $stmt = $dbh->prepare('SELECT profile_id FROM rest_users WHERE user_id = ?');
+            $stmt->execute(array($user['id']));
+            $profileRes = $stmt->fetch();
+
+            // Skip user if he doesn't have a profile associated
+            if ($profileRes['profile_id'] == null) {
+                continue;
+            }
+
+            // Extract queue list from qmanager permissions
+            $profile = getCTIPermissionProfiles($profileRes['profile_id']);
+            $user_queues = array();
+            foreach (@$profile["macro_permissions"]["qmanager"]["permissions"] as $perm) {
+                $user_queues[] = substr($perm["name"],9);
+            }
+            $users[] = array(
+                "username" => $user["username"],
+                "default_extension" => $user["default_extension"],
+                "queues" => $user_queues
+
+            );
+
+            // Prepare extenstion to username map
+            $ext2user[$user["default_extension"]] = $user["username"];
+        }
+    }
+
+
+    // Add special X and admin users for API access
+    $config = array(
+        array("username" => "X", "queues" => array(), "groups" => array(), "agents" => array()),
+        array("username" => "admin", "queues" => array(), "groups" => array(), "agents" => array())
+    );
+    $groups = getCTIGroups();
 
     // Prepare queue details
     foreach (\FreePBX::Queues()->listQueues() as $q) {
@@ -526,30 +565,19 @@ function nethvoice_report_config($users) {
         }
     }
 
-    // Prepare extenstion to username map
-    foreach ($users as $u) {
-        $ext2user[$u["default_extension"]] = $u["username"];
-    }
-
     // Analize each CTI user
     foreach ($users as $u) {
         $ext2user[$u["default_extension"]] = $u["username"];
-        $user = array("username" => $u["username"], "queues" => array(), "groups" => array(), "agents" => array());
+        $user = array("username" => $u["username"], "queues" => $u['queues'], "groups" => array(), "agents" => array());
         foreach ($groups as $group) {
             if ($group["username"] ==  $user["username"]) {
                 $user["groups"][] = $group["name"];
             }
         }
 
-        foreach ($queues as $q => $members) {
-            if (in_array($u["default_extension"], $members)) {
-                $user["queues"][] = strval($q);
-                // map agents extensions to names
-                foreach ($members as $m) {
-                    if (isset($ext2user[$m]) && $ext2user[$m] != $user['username']) {
-                        $user["agents"][] = $ext2user[$m];
-                    }
-                }
+        foreach ($user["queues"] as $q) {
+            foreach ($queues[$q] as $member) {
+                $user["agents"][] = $ext2user[$member];
             }
         }
 
