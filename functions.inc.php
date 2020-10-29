@@ -532,11 +532,10 @@ function nethvoice_report_config() {
                 "username" => $user["username"],
                 "default_extension" => $user["default_extension"],
                 "queues" => $user_queues
-
             );
 
-            // Prepare extenstion to username map
-            $ext2user[$user["default_extension"]] = $user["username"];
+            // Prepare extension to username map
+            $ext2user[$user["default_extension"]] = $user["displayname"];
         }
     }
 
@@ -567,7 +566,6 @@ function nethvoice_report_config() {
 
     // Analize each CTI user
     foreach ($users as $u) {
-        $ext2user[$u["default_extension"]] = $u["username"];
         $user = array("username" => $u["username"], "queues" => $u['queues'], "groups" => array(), "agents" => array());
         foreach ($groups as $group) {
             if ($group["username"] ==  $user["username"]) {
@@ -576,9 +574,11 @@ function nethvoice_report_config() {
         }
 
         foreach ($user["queues"] as $q) {
+            $tmp = array();
             foreach ($queues[$q] as $member) {
-                $user["agents"][] = $ext2user[$member];
+                $tmp[$ext2user[$member]] = 1;
             }
+            $user["agents"] = array_keys($tmp);
         }
 
         $config[] = $user;
