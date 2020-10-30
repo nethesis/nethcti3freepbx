@@ -525,8 +525,12 @@ function nethvoice_report_config() {
             // Extract queue list from qmanager permissions
             $profile = getCTIPermissionProfiles($profileRes['profile_id']);
             $user_queues = array();
-            foreach (@$profile["macro_permissions"]["qmanager"]["permissions"] as $perm) {
-                $user_queues[] = substr($perm["name"],9);
+            // Add queues only if qmanager permission is enabled
+            // Suppress warnings with @ because not all arrays have all keys
+            if (@$profile["macro_permissions"]["qmanager"]["value"] == 1) {
+                foreach (@$profile["macro_permissions"]["qmanager"]["permissions"] as $perm) {
+                    $user_queues[] = substr($perm["name"],9);
+                }
             }
             $users[] = array(
                 "username" => $user["username"],
@@ -549,19 +553,24 @@ function nethvoice_report_config() {
 
     // Prepare queue details
     foreach (\FreePBX::Queues()->listQueues() as $q) {
-        $queue_details = queues_get($q[0]);
         $queues[$q[0]] = array();
+        $queue_details = queues_get($q[0]);
         foreach (explode(PHP_EOL,$queue_details['dynmembers']) as $m) {
             // $m format is 201,0
             $tmp = explode(",",$m);
-            $queues[$q[0]][] = $tmp[0];
+            if ($tmp[0]) {
+                $queues[$q[0]][] = $tmp[0];
+            }
         }
         foreach($queue_details['member'] as $m) {
             // $m format Local/200@from-queue/n,0
             $tmp = explode("@",$m);
             $tmp = explode("/",$tmp[0]);
-            $queues[$q[0]][] = $tmp[1];
+            if ($tmp[1]) {
+                $queues[$q[0]][] = $tmp[1];
+            }
         }
+        $queues[$q[0]] = array_unique($queues[$q[0]]);
     }
 
     // Analize each CTI user
@@ -573,8 +582,8 @@ function nethvoice_report_config() {
             }
         }
 
+        $tmp = array();
         foreach ($user["queues"] as $q) {
-            $tmp = array();
             foreach ($queues[$q] as $member) {
                 $tmp[$ext2user[$member]] = 1;
             }
