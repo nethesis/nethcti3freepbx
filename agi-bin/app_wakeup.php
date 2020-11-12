@@ -62,12 +62,17 @@ $devices = array_unique($devices,SORT_REGULAR);
 // Get users for the extensions
 $query_parts = array();
 foreach ($devices as $device) {
-    $query_parts[] = '(rest_devices_phones.extension = ?  AND rest_devices_phones.type = "mobile") AND keyword = "transport" AND sip.id = ?';
+    $query_parts[] = "(rest_devices_phones.extension = ?  AND rest_devices_phones.type = 'mobile' AND keyword = 'transport' AND sip.id = ?)";
 }
 $query = 'SELECT DISTINCT userman_users.username,rest_devices_phones.extension, data as transport FROM userman_users JOIN rest_devices_phones on userman_users.id = rest_devices_phones.user_id JOIN sip WHERE ';
 $query .= implode(' OR ',$query_parts);
+
+// Prepare parametes for query
+$params = array_merge($devices, $devices);
+sort($params);
+
 $sth = $db->prepare($query);
-$sth->execute($devices);
+$sth->execute($params);
 $results = $sth->fetchAll(\PDO::FETCH_ASSOC);
 if (empty($results)) {
     // There aren't mobile extensions
