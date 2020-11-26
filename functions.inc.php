@@ -546,8 +546,8 @@ function nethvoice_report_config() {
 
     // Add special X and admin users for API access
     $config = array(
-        array("username" => "X", "queues" => array(), "groups" => array(), "agents" => array()),
-        array("username" => "admin", "queues" => array(), "groups" => array(), "agents" => array())
+        array("username" => "X", "queues" => array(), "groups" => array(), "agents" => array(), "users" => array()),
+        array("username" => "admin", "queues" => array(), "groups" => array(), "agents" => array(), "users" => array())
     );
     $groups = getCTIGroups();
 
@@ -575,12 +575,21 @@ function nethvoice_report_config() {
 
     // Analize each CTI user
     foreach ($users as $u) {
-        $user = array("username" => $u["username"], "queues" => $u['queues'], "groups" => array(), "agents" => array());
+        $user = array("username" => $u["username"], "queues" => $u['queues'], "groups" => array(), "agents" => array(), "users" => array());
         foreach ($groups as $group) {
             if ($group["username"] ==  $user["username"]) {
                 $user["groups"][] = $group["name"];
+
+                foreach ($groups as $g) {
+                    if($g["name"] == $group["name"]) {
+                        $user["users"][] = $g["username"];
+                    }
+                }
             }
         }
+
+        // remove duplicates
+        $user["users"] = array_unique($user["users"]);
 
         $tmp = array();
         foreach ($user["queues"] as $q) {
