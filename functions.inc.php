@@ -589,7 +589,7 @@ function nethvoice_report_config() {
         }
 
         // remove duplicates
-        $user["users"] = array_unique($user["users"]);
+        $user["users"] = array_values(array_unique($user["users"]));
 
         $tmp = array();
         foreach ($user["queues"] as $q) {
