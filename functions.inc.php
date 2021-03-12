@@ -23,6 +23,8 @@ function nethcti3_get_config($engine) {
     global $ext;
     global $amp_conf;
     global $db;
+    global $core_conf;
+
     include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
     switch($engine) {
         case "asterisk":
@@ -81,6 +83,11 @@ function nethcti3_get_config($engine) {
                     $ext->add($context, $exten,'',new ext_queue($exten, 't', '', '', '9999', '', '', '', '',''));
                 }
             }
+            /* Add phone reload SIP NOTIFY */
+            if (isset($core_conf) && (method_exists($core_conf, 'addSipNotify'))) {
+                $core_conf->addSipNotify('generic-reload', array('Event' => 'check-sync\;reboot=false', 'Content-Length' => '0'));
+            }
+
         break;
     }
 }
