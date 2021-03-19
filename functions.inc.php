@@ -602,8 +602,8 @@ function nethvoice_report_config() {
         foreach ($user["queues"] as $q) {
             foreach ($queues[$q] as $member) {
                 $tmp[$ext2user[$member]] = 1;
-            }
-            $user["agents"] = array_keys($tmp);
+	    }
+	    $user["agents"] = array_map('strval', array_keys($tmp));
         }
 
         $config[] = $user;
