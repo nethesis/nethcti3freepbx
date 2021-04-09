@@ -60,6 +60,7 @@ class Nethcti3 implements \BMO
     /*Get trunks configuration*/
     public function getTrunksConfiguration() {
         try {
+            $dbh = \FreePBX::Database();
             $result = array();
             $trunks = \FreePBX::Core()->listTrunks();
             foreach($trunks as $trunk) {
@@ -68,8 +69,49 @@ class Nethcti3 implements \BMO
                     "trunkid"=>$trunk["trunkid"],
                     "name"=>$trunk["name"],
                     "usercontext"=>$trunk["usercontext"],
-                    "maxchans"=>$trunk["maxchans"]
+                    "maxchans"=>$trunk["maxchans"],
+                    "host"=>"",
+                    "username"=>"",
+                    "registration"=>"receive",
                 );
+                // Get host, username and registration
+                if ($trunk["tech"] == "sip") {
+                    $sql = 'SELECT `keyword`,`data` FROM `sip` WHERE (`id` = CONCAT("tr-peer-",?) AND ( `keyword` = "host" OR `keyword` = "username")) OR (`id` = CONCAT("tr-reg-",?) AND `keyword` = "register")';
+                    $sth = $dbh->prepare($sql);
+                    $sth->execute([$trunk["trunkid"],$trunk["trunkid"]]);
+                    $res = $sth->fetchAll(\PDO::FETCH_ASSOC);
+                    foreach ($res as $row) {
+                        switch ($row['keyword']) {
+                            case "host":
+                                $result[$trunk['channelid']]->host = $row['data'];
+                                break;
+                            case "username":
+                                $result[$trunk['channelid']]->username = $row['data'];
+                                break;
+                            case "register":
+                                $result[$trunk['channelid']]->registration = "send";
+                                break;
+                        }
+                    }
+                } elseif ($trunk["tech"] == "pjsip") {
+                    $sql = 'SELECT `keyword`,`data` FROM `pjsip` WHERE `id` = ? AND ( `keyword` = "sip_server" OR `keyword` = "username" OR `keyword` = "registration")';
+                    $sth = $dbh->prepare($sql);
+                    $sth->execute([$trunk["trunkid"]]);
+                    $res = $sth->fetchAll(\PDO::FETCH_ASSOC);
+                    foreach ($res as $row) {
+                        switch ($row['keyword']) {
+                            case "host":
+                                $result[$trunk['channelid']]->host = $row['data'];
+                                break;
+                            case "username":
+                                $result[$trunk['channelid']]->username = $row['data'];
+                                break;
+                            case "registration":
+                                $result[$trunk['channelid']]->registration = $row['data'];
+                                break;
+                        }
+                    }
+                }
             }
         } catch (Exception $e) {
             error_log($e->getMessage());
