@@ -62,7 +62,7 @@ $devices = array_unique($devices,SORT_REGULAR);
 // Get users for the extensions
 $query_parts = array();
 foreach ($devices as $device) {
-    $query_parts[] = "(rest_devices_phones.extension = ?  AND rest_devices_phones.type = 'mobile' AND keyword = 'transport' AND sip.id = ?)";
+    $query_parts[] = "(rest_devices_phones.extension = ?  AND rest_devices_phones.type = 'mobile' AND keyword = 'transport' AND data != '0.0.0.0-tcp' AND sip.id = ?)";
 }
 $query = 'SELECT DISTINCT userman_users.username,rest_devices_phones.extension, data as transport FROM userman_users JOIN rest_devices_phones on userman_users.id = rest_devices_phones.user_id JOIN sip WHERE ';
 $query .= implode(' OR ',$query_parts);
@@ -91,14 +91,16 @@ try {
     exit(1);
 }
 
+// Exit early if there aren't extensions to wakeup
+if (empty($results) == 0) {
+    $agi->verbose("No extension to wake, exit");
+    exit(0);
+}
+
 // Wake up extensions
 $extensions_to_wake = array();
 $request_errors = array();
 foreach ($results as $result) {
-    // skip extensions managed by flexisip
-    if ($result['transport'] == "0.0.0.0-tcp") {
-        continue;
-    }
     $username = $result['username'];
     $extension = $result['extension'];
     $agi->verbose("username = $username");
