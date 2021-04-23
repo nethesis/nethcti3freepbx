@@ -91,12 +91,6 @@ try {
     exit(1);
 }
 
-// Exit early if there aren't extensions to wakeup
-if (empty($results) == 0) {
-    $agi->verbose("No extension to wake, exit");
-    exit(0);
-}
-
 // Wake up extensions
 $extensions_to_wake = array();
 $request_errors = array();
