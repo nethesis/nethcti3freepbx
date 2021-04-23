@@ -514,49 +514,14 @@ function nethvoice_report_config() {
     $dbh = \FreePBX::Database();
     $users = array();
     $queues = array();
-    $ext2user = array();
-
-    foreach ($fbx_users as $user) {
-        if ($user['default_extension'] !== 'none') {
-
-            // Retrieve profile id
-            $stmt = $dbh->prepare('SELECT profile_id FROM rest_users WHERE user_id = ?');
-            $stmt->execute(array($user['id']));
-            $profileRes = $stmt->fetch();
-
-            // Skip user if he doesn't have a profile associated
-            if ($profileRes['profile_id'] == null) {
-                continue;
-            }
-
-            // Extract queue list from qmanager permissions
-            $profile = getCTIPermissionProfiles($profileRes['profile_id']);
-            $user_queues = array();
-            // Add queues only if qmanager permission is enabled
-            // Suppress warnings with @ because not all arrays have all keys
-            if (@$profile["macro_permissions"]["qmanager"]["value"] == 1) {
-                foreach (@$profile["macro_permissions"]["qmanager"]["permissions"] as $perm) {
-                    $user_queues[] = substr($perm["name"],9);
-                }
-            }
-            $users[] = array(
-                "username" => $user["username"],
-                "default_extension" => $user["default_extension"],
-                "queues" => $user_queues
-            );
-
-            // Prepare extension to username map
-            $ext2user[$user["default_extension"]] = $user["displayname"];
-        }
-    }
-
+    $groups = getCTIGroups();
+    $profiles = getCTIPermissionProfiles();
 
     // Add special X and admin users for API access
     $config = array(
         array("username" => "X", "queues" => array(), "groups" => array(), "agents" => array(), "users" => array()),
         array("username" => "admin", "queues" => array(), "groups" => array(), "agents" => array(), "users" => array())
     );
-    $groups = getCTIGroups();
 
     // Prepare queue details
     foreach (\FreePBX::Queues()->listQueues() as $q) {
@@ -580,31 +545,105 @@ function nethvoice_report_config() {
         $queues[$q[0]] = array_unique($queues[$q[0]]);
     }
 
-    // Analize each CTI user
-    foreach ($users as $u) {
-        $user = array("username" => $u["username"], "queues" => $u['queues'], "groups" => array(), "agents" => array(), "users" => array());
-        foreach ($groups as $group) {
-            if ($group["username"] ==  $user["username"]) {
-                $user["groups"][] = $group["name"];
+    // Get users list and create the extension-user map
+    $user_list = array();
+    $ext2user = array();
+    foreach (\FreePBX::create()->Userman->getAllUsers() as $user) {
+        if ($user['default_extension'] !== 'none') {
+            $user_list[$user['id']] = $user['username'];
+            $ext2user[$user["default_extension"]] = $user["displayname"];
+        }
+    }
 
-                foreach ($groups as $g) {
-                    if($g["name"] == $group["name"]) {
-                        $user["users"][] = $g["username"];
+    // Create permissions for every user
+    foreach ($user_list as $user_id => $username) {
+        $user = array(
+            "username" => $username,
+            "queues" => array(),
+            "groups" => array(),
+            "agents" => array(),
+            "users" => array()
+        );
+
+        // Get user permission profile
+        $stmt = $dbh->prepare('SELECT profile_id FROM rest_users WHERE user_id = ?');
+        $stmt->execute(array($user_id));
+        $profileRes = $stmt->fetch();
+        // Skip user if he doesn't have a profile associated
+        if ($profileRes['profile_id'] == null) {
+            continue;
+        }
+        foreach ($profiles as $p) {
+            if ($p['id'] === $profileRes['profile_id']) {
+                $profile = $p;
+                break;
+            }
+        }
+
+        // Get queuemanager queues from permission profile
+        if ( isset($profile['macro_permissions']['qmanager'])
+            && $profile['macro_permissions']['qmanager']['value'] == 1
+            && !empty($profile['macro_permissions']['qmanager']['permissions']))
+        {
+            foreach ($profile['macro_permissions']['qmanager']['permissions'] as $perm) {
+                $queue_name = substr($perm["name"],9);
+                // Add queue to user queues list
+                $user['queues'][] = $queue_name;
+                // Add agent displaynames from queues
+                foreach ($queues[$queue_name] as $member_extension) {
+                    if (isset($ext2user[$member_extension])) {
+                        $user['agents'][] = $ext2user[$member_extension];
                     }
                 }
             }
         }
 
-        // remove duplicates
-        $user["users"] = array_values(array_unique($user["users"]));
-
-        $tmp = array();
-        foreach ($user["queues"] as $q) {
-            foreach ($queues[$q] as $member) {
-                $tmp[$ext2user[$member]] = 1;
-	    }
-	    $user["agents"] = array_map('strval', array_keys($tmp));
+        if (isset($profile['macro_permissions']['cdr'])
+            && isset($profile['macro_permissions']['cdr']['value'])
+            && $profile['macro_permissions']['cdr']['value'] == 1)
+        {
+            if (!empty($profile['macro_permissions']['cdr']['permissions'])) {
+                // Check if user has CDR admin permission or group CDR permission
+                $ad_cdr = False;
+                $group_cdr = False;
+                foreach ($profile['macro_permissions']['cdr']['permissions'] as $perm) {
+                    if ($perm['name'] == 'ad_cdr' && $perm['value'] == 1) {
+                        $ad_cdr = True;
+                    }
+                    if ($perm['name'] == 'group_cdr' && $perm['value'] == 1) {
+                        $ad_cdr = True;
+                    }
+                }
+                if ($ad_cdr) {
+                    // Add everyone if admin CDR permission is enable
+                    foreach ($groups as $group) {
+                        $user["groups"][] = $group["name"];
+                        foreach ($user_list as $username) {
+                            $user["users"][] = $username;
+                        }
+                    }
+                } elseif ($group_cdr) {
+                    // Add groups user is member of
+                    foreach ($groups as $group) {
+                        if ($group["username"] == $username) {
+                            $user["groups"][] = $group["name"];
+                            foreach ($groups as $g) {
+                                if($g["name"] == $group["name"]) {
+                                     $user["users"][] = $g["username"];
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Add self if admin CDR permission is disabled but cdr permision is enabled
+                    $user["users"][] = $username;
+                }
+            }
         }
+        // remove duplicates
+        $user["groups"] = array_values(array_unique($user["groups"]));
+        $user["users"] = array_values(array_unique($user["users"]));
+        $user["agents"] = array_values(array_unique($user["agents"]));
 
         $config[] = $user;
     }
