@@ -72,7 +72,7 @@ class Nethcti3 implements \BMO
                     "maxchans"=>$trunk["maxchans"],
                     "host"=>"",
                     "username"=>"",
-                    "registration"=>"receive",
+                    "registration"=>"none",
                 );
                 // Get host, username and registration
                 if ($trunk["tech"] == "sip") {
@@ -108,6 +108,24 @@ class Nethcti3 implements \BMO
                                 break;
                             case "registration":
                                 $result[$trunk['channelid']]->registration = $row['data'];
+                                break;
+                        }
+                    }
+                } elseif ($trunk["tech"] == "iax2") {
+                    $sql = 'SELECT `keyword`,`data` FROM `iax` WHERE (`id` = CONCAT("tr-peer-",?) AND ( `keyword` = "host" OR `keyword` = "username")) OR (`id` = CONCAT("tr-reg-",?) AND `keyword` = "register")';
+                    $sth = $dbh->prepare($sql);
+                    $sth->execute([$trunk["trunkid"],$trunk["trunkid"]]);
+                    $res = $sth->fetchAll(\PDO::FETCH_ASSOC);
+                    foreach ($res as $row) {
+                        switch ($row['keyword']) {
+                            case "host":
+                                $result[$trunk['channelid']]->host = $row['data'];
+                                break;
+                            case "username":
+                                $result[$trunk['channelid']]->username = $row['data'];
+                                break;
+                            case "register":
+                                $result[$trunk['channelid']]->registration = "send";
                                 break;
                         }
                     }
