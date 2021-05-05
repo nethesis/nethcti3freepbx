@@ -564,7 +564,6 @@ function nethvoice_report_config() {
             "agents" => array(),
             "users" => array()
         );
-
         // Get user permission profile
         $stmt = $dbh->prepare('SELECT profile_id FROM rest_users WHERE user_id = ?');
         $stmt->execute(array($user_id));
@@ -586,6 +585,9 @@ function nethvoice_report_config() {
             && !empty($profile['macro_permissions']['qmanager']['permissions']))
         {
             foreach ($profile['macro_permissions']['qmanager']['permissions'] as $perm) {
+                if ($perm["value"] != True) {
+                    continue;
+                }
                 $queue_name = substr($perm["name"],9);
                 // Add queue to user queues list
                 $user['queues'][] = $queue_name;
