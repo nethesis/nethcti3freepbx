@@ -114,6 +114,8 @@ switch ($res['action']) {
         //Call forward
         if ($res['param'] != '') {
             @$agi->verbose("[offhour] call forward to {$res['param']}",4);
+            $agi->answer();
+            $agi->stream_file('silence/1');
             # Dial Local/$param...
             $agi->exec_dial("Local",$res['param']."@from-internal");
         } else {
