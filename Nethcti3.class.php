@@ -111,7 +111,7 @@ class Nethcti3 implements \BMO
                                 break;
                         }
                     }
-                } elseif ($trunk["tech"] == "iax2") {
+                } elseif ($trunk["tech"] == "iax") {
                     $sql = 'SELECT `keyword`,`data` FROM `iax` WHERE (`id` = CONCAT("tr-peer-",?) AND ( `keyword` = "host" OR `keyword` = "username")) OR (`id` = CONCAT("tr-reg-",?) AND `keyword` = "register")';
                     $sth = $dbh->prepare($sql);
                     $sth->execute([$trunk["trunkid"],$trunk["trunkid"]]);
