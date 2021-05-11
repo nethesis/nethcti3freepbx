@@ -100,7 +100,7 @@ class Nethcti3 implements \BMO
                     $res = $sth->fetchAll(\PDO::FETCH_ASSOC);
                     foreach ($res as $row) {
                         switch ($row['keyword']) {
-                            case "host":
+                            case "sip_server":
                                 $result[$trunk['channelid']]->host = $row['data'];
                                 break;
                             case "username":
