@@ -76,11 +76,14 @@ function nethcti3_get_config($engine) {
             $ext->add($context, '_X.', '', new ext_goto('1','${EXTEN}','from-internal'));
             /* Add Waiting Queues for Operator Panel*/
             $context = 'ctiopqueue';
-            foreach (getCTIPermissionProfiles(false,false,false) as $profile){
-                if (isset($profile['macro_permissions']['operator_panel']) && $profile['macro_permissions']['operator_panel']['value'] == true) {
-                    $exten = "ctiopqueue".$profile['id'];
-                    // Queue(queuename[,options[,URL[,announceoverride[,timeout[,AGI[,macro[,gosub[,rule[,position]]]]]]]]])
-                    $ext->add($context, $exten,'',new ext_queue($exten, 't', '', '', '9999', '', '', '', '',''));
+            $profiles = getCTIPermissionProfiles(false,false,false);
+            if (!empty($profiles)){
+                foreach($profiles as $profile){
+                    if (isset($profile['macro_permissions']['operator_panel']) && $profile['macro_permissions']['operator_panel']['value'] == true) {
+                        $exten = "ctiopqueue".$profile['id'];
+                        // Queue(queuename[,options[,URL[,announceoverride[,timeout[,AGI[,macro[,gosub[,rule[,position]]]]]]]]])
+                        $ext->add($context, $exten,'',new ext_queue($exten, 't', '', '', '9999', '', '', '', '',''));
+                    }
                 }
             }
             /* Add phone reload SIP NOTIFY */
