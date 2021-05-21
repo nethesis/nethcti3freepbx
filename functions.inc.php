@@ -126,6 +126,23 @@ function nethcti3_get_config_late($engine) {
             /* Add wakeup for App*/
             $ext->splice('macro-dial-one', 's','setexttocall', new ext_agi('/var/lib/asterisk/agi-bin/app_wakeup.php'));
             $ext->splice('macro-dial', 's', 'dial', new ext_agi('/var/lib/asterisk/agi-bin/app_wakeup.php'));
+
+            /* Use main extension on login/logout/pause*/
+            $ext->splice('app-queue-toggle', 's', 'start', new ext_setvar('QUEUEUSER', '${IF($[${LEN(${DB(AMPUSER/${AMPUSER}/accountcode)})}>0]?${DB(AMPUSER/${AMPUSER}/accountcode)}:${QUEUEUSER})}'),'mainext',4);
+
+            $ext->replace('app-all-queue-toggle', 's', '4', new ext_agi('queue_devstate.agi,getall,${QUEUEUSER}'));
+            $ext->replace('app-all-queue-toggle', 's', '17', new ext_execif('$["${QUEUESTAT}"="LOGGEDOUT"]', 'SayDigits', '${QUEUEUSER}'));
+            $ext->splice('app-all-queue-toggle', 's', 'start', new ext_setvar('QUEUEUSER', '${IF($[${LEN(${DB(AMPUSER/${AMPUSER}/accountcode)})}>0]?${DB(AMPUSER/${AMPUSER}/accountcode)}:${AMPUSER})}'),'mainext',3);
+
+            $ext->splice('macro-toggle-del-agent', 's', '1', new ext_noop('Main Extension'),'mainext',1);
+            $ext->splice('macro-toggle-del-agent', 's', 'mainext', new ext_setvar('QUEUEUSER', '${IF($[${LEN(${DB(AMPUSER/${AMPUSER}/accountcode)})}>0]?${DB(AMPUSER/${AMPUSER}/accountcode)}:${QUEUEUSER})}'),'mainext2',2);
+
+            $ext->splice('macro-toggle-add-agent', 's', 'invalid', new ext_setvar('QUEUEUSER', '${IF($[${LEN(${DB(AMPUSER/${AMPUSER}/accountcode)})}>0]?${DB(AMPUSER/${AMPUSER}/accountcode)}:${QUEUEUSER})}'),'mainext',-7);
+
+            $ext->splice('app-queue-pause-toggle', 's', 'start', new ext_setvar('QUEUEUSER', '${IF($[${LEN(${DB(AMPUSER/${AMPUSER}/accountcode)})}>0]?${DB(AMPUSER/${AMPUSER}/accountcode)}:${QUEUEUSER})}'),'mainext',4);
+
+            $ext->replace('app-all-queue-pause-toggle', 's', '4', new ext_agi('queue_devstate.agi,toggle-pause-all,${QUEUEUSER}'));
+            $ext->splice('app-all-queue-pause-toggle', 's', 'start', new ext_setvar('QUEUEUSER', '${IF($[${LEN(${DB(AMPUSER/${AMPUSER}/accountcode)})}>0]?${DB(AMPUSER/${AMPUSER}/accountcode)}:${AMPUSER})}'),'mainext',3);
         break;
     }
 
