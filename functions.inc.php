@@ -610,13 +610,13 @@ function nethvoice_report_config() {
             if (!empty($profile['macro_permissions']['cdr']['permissions'])) {
                 // Check if user has CDR admin permission or group CDR permission
                 $ad_cdr = False;
-                $group_cdr = False;
+                $group_cdr = True;
                 foreach ($profile['macro_permissions']['cdr']['permissions'] as $perm) {
                     if ($perm['name'] == 'ad_cdr' && $perm['value'] == 1) {
                         $ad_cdr = True;
                     }
                     if ($perm['name'] == 'group_cdr' && $perm['value'] == 1) {
-                        $ad_cdr = True;
+                        $group_cdr = True;
                     }
                 }
                 if ($ad_cdr) {
