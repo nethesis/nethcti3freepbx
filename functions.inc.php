@@ -145,6 +145,32 @@ function nethcti3_get_config_late($engine) {
                 $ext->replace('app-all-queue-pause-toggle', 's', '4', new ext_agi('queue_devstate.agi,toggle-pause-all,${QUEUEUSER}'));
                 $ext->splice('app-all-queue-pause-toggle', 's', 'start', new ext_setvar('QUEUEUSER', '${IF($[${LEN(${DB(AMPUSER/${AMPUSER}/accountcode)})}>0]?${DB(AMPUSER/${AMPUSER}/accountcode)}:${AMPUSER})}'),'mainext',3);
             }
+
+            /* Add dynamic context include for cti profiles */
+            $includes = array();
+
+            // Add paging
+            $sql = "SELECT page_group, force_page, duplex, announcement, volume FROM paging_config";
+            $paging_groups = $db->getAll($sql, DB_FETCHMODE_ASSOC);
+            if(!empty($paging_groups)) {
+                $includes[] = 'ext-paging';
+            }
+
+            // Add Bosssecretary
+            if (function_exists('bosssecretary_get_all_groups')) {
+                if (!empty(bosssecretary_get_all_groups())) {
+                    $includes[] = 'ext-bosssecretary';
+                }
+            }
+
+            if (!empty($includes)) {
+                foreach (getCTIPermissionProfiles() as $profile) {
+                    foreach ($includes as $include) {
+                        $ext->addInclude('cti-profile-'.$profile['id'], $include);
+                    }
+                }
+	    }
+
         break;
     }
 
