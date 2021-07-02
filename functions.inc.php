@@ -163,6 +163,11 @@ function nethcti3_get_config_late($engine) {
                 }
             }
 
+            // Add NethHotel services context
+            if (function_exists('nethhotel_get_config')) {
+                $includes[] = 'hotel-services';
+            }
+
             if (!empty($includes)) {
                 foreach (getCTIPermissionProfiles() as $profile) {
                     foreach ($includes as $include) {
