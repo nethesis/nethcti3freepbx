@@ -340,7 +340,7 @@ function nethcti3_get_config_late($engine) {
             error_log('fail to write streaming config');
         }
 
-	// Write recallonbusy.json configuration file
+        // Write recallonbusy.json configuration file
         $out = [];
         global $astman;
         try {
