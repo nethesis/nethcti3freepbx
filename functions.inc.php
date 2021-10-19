@@ -510,11 +510,7 @@ function nethcti3_get_config_early($engine) {
             elseif ($sip['dtmfmode'] == 'info') $user_variables['account_dtmf_type_1'] = 'sip_info';
             elseif ($sip['dtmfmode'] == 'rfc4733') $user_variables['account_dtmf_type_1'] = 'rfc4733';
         }
-        if ($extension != $mainextension) {
-            $user_variables['account_voicemail_1'] = $featurecodes['voicemaildialvoicemail'].$mainextension;
-        } else {
-            $user_variables['account_voicemail_1'] = $featurecodes['voicemailmyvoicemail'];
-        }
+        $user_variables['account_voicemail_1'] = $featurecodes['voicemailmyvoicemail'];
         $res = nethcti_tancredi_patch($tancrediUrl . 'phones/' . str_replace(':','-',$ext['mac']), $username, $secretkey, array("variables" => $user_variables));
     }
     /***********************************
