@@ -340,6 +340,28 @@ function nethcti3_get_config_late($engine) {
             error_log('fail to write streaming config');
         }
 
+        // Write recallonbusy.json configuration file
+        $out = [];
+        global $astman;
+        try {
+            $defaultROB = \FreePBX::Recallonbusy()->getConfig('default');
+        } catch (Exception $e) {
+            $defaultROB = 'disabled';
+        }
+
+        foreach ($users as $user) {
+            if ($user['default_extension'] !== 'none') {
+                $enabled = $astman->database_get("ROBconfig",$user['default_extension']);
+                $enabled = !empty($enabled) ? $enabled : $defaultROB;
+                $out[$user['username']]['recallonbusy'] = $enabled;
+            }
+        }
+
+        $res = $nethcti3->writeCTIConfigurationFile('/recallonbusy.json',(object) $out);
+        if ($res === FALSE) {
+            error_log('fail to write recallonbusy config');
+        }
+
         // Generate nethvoice report based on NethCTI configuration
         nethvoice_report_config();
 
