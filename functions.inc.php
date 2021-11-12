@@ -31,7 +31,7 @@ function nethcti3_get_config($engine) {
             /*Configure conference*/
             $defaultVal = $amp_conf['ASTCONFAPP'];
             $amp_conf['ASTCONFAPP'] = 'app_meetme';
-            $query='SELECT featurename,IF(customcode IS NULL OR customcode = "",defaultcode,customcode) as defaultcode FROM featurecodes WHERE modulename="nethcti3" AND ( featurename="meetme_conf" OR featurename="incall_audio" ) ';
+            $query='SELECT featurename,IF(customcode IS NULL OR customcode = "",defaultcode,customcode) as defaultcode FROM featurecodes WHERE ( modulename="nethcti3" OR modulename="donotdisturb" ) AND ( featurename="meetme_conf" OR featurename="incall_audio" OR featurename="dnd_on" OR featurename="dnd_off" OR featurename="dnd_toggle")';
             $codes = array();
             foreach ($db->getAll($query) as $feature) {
                 $codes[$feature[0]] = $feature[1];
@@ -89,6 +89,19 @@ function nethcti3_get_config($engine) {
             /* Add phone reload SIP NOTIFY */
             if (isset($core_conf) && (method_exists($core_conf, 'addSipNotify'))) {
                 $core_conf->addSipNotify('generic-reload', array('Event' => 'check-sync\;reboot=false', 'Content-Length' => '0'));
+                if (!empty($codes['dnd_on'])) {
+                    $exten=$codes['dnd_on'];
+                    $ext->splice('app-dnd-on', $codes['dnd_on'], "hook_1", new ext_agi('send_notify.php,${AMPUSER}'),'notify',1);
+                }
+                if (!empty($codes['dnd_off'])) {
+                    $exten=$codes['dnd_off'];
+                    $ext->splice('app-dnd-off', $codes['dnd_off'], "hook_1", new ext_agi('send_notify.php,${AMPUSER}'),'notify',1);
+                }
+                if (!empty($codes['dnd_toggle'])) {
+                    $exten=$codes['dnd_toggle'];
+                    $ext->splice('app-dnd-toggle', $codes['dnd_toggle'], "hook_on", new ext_agi('send_notify.php,${AMPUSER}'),'notify',1);
+                    $ext->splice('app-dnd-toggle', $codes['dnd_toggle'], "hook_off", new ext_agi('send_notify.php,${AMPUSER}'),'notify',1);
+                }
             }
 
         break;
