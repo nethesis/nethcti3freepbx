@@ -605,8 +605,19 @@ function nethvoice_report_config() {
         if ($user['default_extension'] !== 'none') {
             $user_list[$user['id']] = $user['username'];
             $ext2user[$user["default_extension"]] = $user["displayname"];
+            foreach ($groups as $key => $group) {
+                if ($user['username'] == $group["username"]) {
+                    $groups[$key]["id"] = $user['id'];
+                }
+            }
         }
     }
+
+    // Retrieve all extensions
+    $stmt = $dbh->prepare('SELECT user_id, extension FROM rest_devices_phones WHERE extension != "NULL" AND extension != ""');
+    $stmt->execute();
+    $res_devices = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    $all_extensions = array_column($res_devices, 'extension');
 
     // Create permissions for every user
     foreach ($user_list as $user_id => $username) {
@@ -615,7 +626,8 @@ function nethvoice_report_config() {
             "queues" => array(),
             "groups" => array(),
             "agents" => array(),
-            "users" => array()
+            "users" => array(),
+            "cdr" => ""
         );
         // Get user permission profile
         $stmt = $dbh->prepare('SELECT profile_id FROM rest_users WHERE user_id = ?');
@@ -670,28 +682,37 @@ function nethvoice_report_config() {
                     }
                 }
                 if ($ad_cdr) {
+                    $user["cdr"] = "global";
                     // Add everyone if admin CDR permission is enable
+                    $user["users"] = $all_extensions;
                     foreach ($groups as $group) {
                         $user["groups"][] = $group["name"];
-                        foreach ($user_list as $username) {
-                            $user["users"][] = $username;
-                        }
                     }
                 } elseif ($group_cdr) {
+                    $user["cdr"] = "group";
                     // Add groups user is member of
                     foreach ($groups as $group) {
                         if ($group["username"] == $username) {
                             $user["groups"][] = $group["name"];
                             foreach ($groups as $g) {
                                 if($g["name"] == $group["name"]) {
-                                     $user["users"][] = $g["username"];
+                                    foreach ($res_devices as $device) {
+                                        if ($g["id"] == $device["user_id"]) {
+                                            $user["users"][] = $device["extension"];
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 } else {
+                    $user["cdr"] = "personal";
                     // Add self if admin CDR permission is disabled but cdr permision is enabled
-                    $user["users"][] = $username;
+                    foreach ($res_devices as $device) {
+                        if ($user_id == $device["user_id"]) {
+                            $user["users"][] = $device["extension"];
+                        }
+                    }
                 }
             }
         }
