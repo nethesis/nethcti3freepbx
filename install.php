@@ -4,6 +4,22 @@ if (!defined('FREEPBX_IS_AUTH')) { die('No direct script access allowed'); }
 global $db;
 global $amp_conf;
 
+$freepbx_conf =& freepbx_conf::create();
+$set=[];
+$set['value'] = true;
+$set['defaultval'] =& $set['value'];
+$set['readonly'] = 0;
+$set['hidden'] = 0;
+$set['level'] = 0;
+$set['module'] = '';
+$set['category'] = 'Dialplan and Operational';
+$set['emptyok'] = 1;
+$set['sortorder'] = 0;
+$set['name'] = 'Attended Transfer Caller ID Override';
+$set['description'] = 'Use transferor\'s extension number when doing an attended transfer of an external outgoing call';
+$set['type'] = CONF_TYPE_BOOL;
+$freepbx_conf->define_conf_setting('ATX_CID_OVERRIDE',$set,true);
+
 $sql='
     CREATE TABLE IF NOT EXISTS `offhour` (
       `id` int(11) NOT NULL auto_increment,
