@@ -158,8 +158,8 @@ function nethcti3_get_config_late($engine) {
                 $ext->splice('app-all-queue-pause-toggle', 's', 'start', new ext_setvar('QUEUEUSER', '${IF($[${LEN(${DB(AMPUSER/${AMPUSER}/accountcode)})}>0]?${DB(AMPUSER/${AMPUSER}/accountcode)}:${AMPUSER})}'),'mainext',3);
             }
             if (!isset($amp_conf['ATX_CID_OVERRIDE']) || $amp_conf['ATX_CID_OVERRIDE'] == 1) {
-                $ext->splice('macro-dial-one','s','dial', new ext_execif('$["${DB(AMPUSER/${ARG3}/cidname)}" != "" && "${CHANNEL:0:5}"="Local" && "${DB(AMPUSER/${CALLERID(num)}/cidname)}" = ""]', 'Set', 'CALLERID(num)=${DB(AMPUSER/${FROMEXTEN}/cidnum)}'),'',-1);
-                $ext->splice('macro-dial-one','s','dial', new ext_execif('$["${DB(AMPUSER/${CALLERID(num)}/cidname)}" != ""]', 'Set', 'CALLERID(name)=${DB(AMPUSER/${CALLERID(num)}/cidname)}'),'',-1);
+                $ext->splice('macro-dial-one','s','dial', new ext_execif('$["${DB(AMPUSER/${ARG3}/cidname)}" != "" && "${DB(AMPUSER/${CALLERID(num)}/cidname)}" = "" && "${ATTENDEDTRANSFER}" != "" && "${DB(AMPUSER/${FROMEXTEN}/cidname)}" != ""]', 'Set', 'CALLERID(num)=${DB(AMPUSER/${FROMEXTEN}/cidnum)}'),'',-1);
+                $ext->splice('macro-dial-one','s','dial', new ext_execif('$["${DB(AMPUSER/${CALLERID(num)}/cidname)}" != "" && "${ATTENDEDTRANSFER}" != ""]', 'Set', 'CALLERID(name)=${DB(AMPUSER/${CALLERID(num)}/cidname)}'),'',-1);
             }
         break;
     }
