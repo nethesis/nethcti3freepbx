@@ -103,6 +103,7 @@ function nethcti3_get_config($engine) {
                     $ext->splice('app-dnd-toggle', $codes['dnd_toggle'], "hook_off", new ext_agi('send_notify.php,${AMPUSER}'),'notify',1);
                 }
             }
+
         break;
     }
 }
@@ -156,10 +157,6 @@ function nethcti3_get_config_late($engine) {
 
                 $ext->replace('app-all-queue-pause-toggle', 's', '4', new ext_agi('queue_devstate.agi,toggle-pause-all,${QUEUEUSER}'));
                 $ext->splice('app-all-queue-pause-toggle', 's', 'start', new ext_setvar('QUEUEUSER', '${IF($[${LEN(${DB(AMPUSER/${AMPUSER}/accountcode)})}>0]?${DB(AMPUSER/${AMPUSER}/accountcode)}:${AMPUSER})}'),'mainext',3);
-            }
-            if (!isset($amp_conf['ATX_CID_OVERRIDE']) || $amp_conf['ATX_CID_OVERRIDE'] == 1) {
-                $ext->splice('macro-dial-one','s','dial', new ext_execif('$["${DB(AMPUSER/${ARG3}/cidname)}" != "" && "${DB(AMPUSER/${CALLERID(num)}/cidname)}" = "" && "${ATTENDEDTRANSFER}" != "" && "${DB(AMPUSER/${FROMEXTEN}/cidname)}" != ""]', 'Set', 'CALLERID(num)=${DB(AMPUSER/${FROMEXTEN}/cidnum)}'),'',-1);
-                $ext->splice('macro-dial-one','s','dial', new ext_execif('$["${DB(AMPUSER/${CALLERID(num)}/cidname)}" != "" && "${ATTENDEDTRANSFER}" != ""]', 'Set', 'CALLERID(name)=${DB(AMPUSER/${CALLERID(num)}/cidname)}'),'',-1);
             }
         break;
     }
@@ -270,13 +267,6 @@ function nethcti3_get_config_late($engine) {
             }
         }
 
-        //enable Janus Gateway if there are WebRTC extensions
-        if ($enableJanus) {
-            // enable janus in configuration database
-            system('/usr/bin/sudo /sbin/e-smith/config setprop janus-gateway status enabled');
-            system('/usr/bin/sudo /sbin/e-smith/signal-event runlevel-adjust');
-        }
-
         // Write users.json configuration file
         $res = $nethcti3->writeCTIConfigurationFile('/users.json',$json);
 
@@ -381,8 +371,11 @@ function nethcti3_get_config_late($engine) {
         // Generate nethvoice report based on NethCTI configuration
         nethvoice_report_config();
 
-        //Move provisioning files from /var/lib/tftpnethvoice to /var/lib/tftpboot
-        system("/usr/bin/sudo /usr/bin/scl enable rh-php56 -- php /var/www/html/freepbx/rest/lib/moveProvisionFiles.php");
+	// Convert /etc/asterisk symlinks to file copied
+	if (file_exists('/var/lib/asterisk/bin/symlink2copies.sh')) {
+	        system("/var/lib/asterisk/bin/symlink2copies.sh");
+	}
+
         //Reload CTI
         system("/var/www/html/freepbx/rest/lib/ctiReloadHelper.sh > /dev/null 2>&1 &");
     } catch (Exception $e) {
@@ -392,10 +385,6 @@ function nethcti3_get_config_late($engine) {
 
 function nethcti3_get_config_early($engine) {
     include_once('/var/www/html/freepbx/rest/lib/libCTI.php');
-    // Check proviosioning engine and continue only for Tancredi
-    exec("/usr/bin/sudo /sbin/e-smith/config getprop nethvoice ProvisioningEngine", $out);
-    if ($out[0] !== 'tancredi') return TRUE;
-
     global $amp_conf;
     // Call Tancredi API to set variables that needs to be set on FreePBX retrieve conf
     // get featurecodes
@@ -454,7 +443,7 @@ function nethcti3_get_config_early($engine) {
     // Get CTI profile permissions
     $permissions = getCTIPermissionProfiles(false,true,true);
 
-    $tancrediUrl = 'http://localhost/tancredi/api/v1/';
+    $tancrediUrl = 'http://127.0.0.1:'.getenv('TANCREDIPORT').'/tancredi/api/v1/';
 
     // Get Tancredi authentication variables
     include_once '/var/www/html/freepbx/rest/config.inc.php';
