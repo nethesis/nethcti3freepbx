@@ -86,23 +86,6 @@ function nethcti3_get_config($engine) {
                     }
                 }
             }
-            /* Add phone reload SIP NOTIFY */
-            if (isset($core_conf) && (method_exists($core_conf, 'addSipNotify'))) {
-                $core_conf->addSipNotify('generic-reload', array('Event' => 'check-sync\;reboot=false', 'Content-Length' => '0'));
-                if (!empty($codes['dnd_on'])) {
-                    $exten=$codes['dnd_on'];
-                    $ext->splice('app-dnd-on', $codes['dnd_on'], "hook_1", new ext_agi('send_notify.php,${AMPUSER}'),'notify',1);
-                }
-                if (!empty($codes['dnd_off'])) {
-                    $exten=$codes['dnd_off'];
-                    $ext->splice('app-dnd-off', $codes['dnd_off'], "hook_1", new ext_agi('send_notify.php,${AMPUSER}'),'notify',1);
-                }
-                if (!empty($codes['dnd_toggle'])) {
-                    $exten=$codes['dnd_toggle'];
-                    $ext->splice('app-dnd-toggle', $codes['dnd_toggle'], "hook_on", new ext_agi('send_notify.php,${AMPUSER}'),'notify',1);
-                    $ext->splice('app-dnd-toggle', $codes['dnd_toggle'], "hook_off", new ext_agi('send_notify.php,${AMPUSER}'),'notify',1);
-                }
-            }
         break;
     }
 }
