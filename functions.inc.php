@@ -86,6 +86,10 @@ function nethcti3_get_config($engine) {
                     }
                 }
             }
+            /* Add generic reload SIP NOTIFY */
+            if (isset($core_conf) && (method_exists($core_conf, 'addSipNotify'))) {
+                $core_conf->addSipNotify('generic-reload', array('Event' => 'check-sync\;reboot=false', 'Content-Length' => '0'));
+            }
         break;
     }
 }
