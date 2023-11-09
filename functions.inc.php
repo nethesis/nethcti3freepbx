@@ -144,6 +144,34 @@ function nethcti3_get_config_late($engine) {
                 $ext->replace('app-all-queue-pause-toggle', 's', '4', new ext_agi('queue_devstate.agi,toggle-pause-all,${QUEUEUSER}'));
                 $ext->splice('app-all-queue-pause-toggle', 's', 'start', new ext_setvar('QUEUEUSER', '${IF($[${LEN(${DB(AMPUSER/${AMPUSER}/accountcode)})}>0]?${DB(AMPUSER/${AMPUSER}/accountcode)}:${AMPUSER})}'),'mainext',3);
             }
+            if (!isset($amp_conf['ATX_CID_OVERRIDE']) || $amp_conf['ATX_CID_OVERRIDE'] == 1) {
+                $ext->splice('macro-dial-one','s','dial', new ext_execif('$["${DB(AMPUSER/${ARG3}/cidname)}" != "" && "${DB(AMPUSER/${CALLERID(num)}/cidname)}" = "" && "${ATTENDEDTRANSFER}" != "" && "${DB(AMPUSER/${FROMEXTEN}/cidname)}" != ""]', 'Set', 'CALLERID(num)=${DB(AMPUSER/${FROMEXTEN}/cidnum)}'),'',-1);
+                $ext->splice('macro-dial-one','s','dial', new ext_execif('$["${DB(AMPUSER/${CALLERID(num)}/cidname)}" != "" && "${ATTENDEDTRANSFER}" != ""]', 'Set', 'CALLERID(name)=${DB(AMPUSER/${CALLERID(num)}/cidname)}'),'',-1);
+            }
+            /*Add isTrunk = 1 header to VoIP trunks that doesn't require SRTP encryption*/
+            // Get all voip providers ip that doesn't need media encryption
+            $sql = "SELECT t1.data
+                FROM rest_pjsip_trunks_defaults AS t1
+                JOIN rest_pjsip_providers AS t2 ON t1.provider_id = t2.id
+                JOIN rest_pjsip_trunks_defaults AS t3 ON t2.id = t3.provider_id
+                WHERE t3.keyword = 'media_encryption' AND t3.data = 'no'
+                AND t1.keyword = 'sip_server'";
+            $stmt = $db->prepare($sql);
+            $stmt->execute();
+            $voip_providers = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            // Get all trunks
+            $trunks = FreePBX::Core()->listTrunks();
+            $voip_trunk_if = [];
+            foreach ($trunks as $trunk) {
+                $details = FreePBX::Core()->getTrunkDetails($trunk['trunkid']);
+                if (in_array($details['sip_server'], $voip_providers)) {
+                    // Trunk needs needs media encryption disabled, set isTrunk header to 1
+                    $voip_trunk_if[] =  '"${DIAL_TRUNK}" = "' . $trunk['trunkid'] . '"';
+                }
+            }
+            if (!empty($voip_trunk_if)) {
+                $ext->splice('macro-dialout-trunk', 's', 'gocall', new ext_gosubif('$[' . implode (' | ', $voip_trunk_if) . ']', 'func-set-sipheader,s,1', false, 'isTrunk,1'));
+            }
         break;
     }
 
