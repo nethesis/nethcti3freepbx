@@ -169,8 +169,12 @@ function nethcti3_get_config_late($engine) {
                     $voip_trunk_if[] =  '"${DIAL_TRUNK}" = "' . $trunk['trunkid'] . '"';
                 }
             }
-            if (!empty($voip_trunk_if)) {
-                $ext->splice('macro-dialout-trunk', 's', 'gocall', new ext_gosubif('$[' . implode (' | ', $voip_trunk_if) . ']', 'func-set-sipheader,s,1', false, 'isTrunk,1'));
+	    if (!empty($voip_trunk_if)) {
+                try {
+                    $ext->splice('macro-dialout-trunk', 's', 'gocall', new ext_gosubif('$[' . implode (' | ', $voip_trunk_if) . ']', 'func-set-sipheader,s,1', false, 'isTrunk,1'));
+		} Catch(Exception $e) {
+                    error_log('error adding isTrunk header setter to dialplan');
+                }
             }
         break;
     }
