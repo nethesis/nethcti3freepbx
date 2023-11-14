@@ -512,7 +512,11 @@ function nethcti3_get_config_early($engine) {
             }
         }
         // srtp
-        if (array_key_exists('media_encryption', $sip) && ( $sip['media_encryption'] == 'sdes' || $sip['media_encryption'] == 'dtls')) {
+        $sql = 'SELECT srtp FROM rest_devices_phones WHERE extension = ?';
+        $stmt = $dbh->prepare($sql);
+        $stmt->execute(array($extension));
+        $res = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!empty($res) && !empty($res['srtp']) && $res['srtp'] == 1) {
             $user_variables['account_encryption_1'] = '1';
         } else {
             $user_variables['account_encryption_1'] = '';
