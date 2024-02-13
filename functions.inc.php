@@ -90,6 +90,66 @@ function nethcti3_get_config($engine) {
             if (isset($core_conf) && (method_exists($core_conf, 'addSipNotify'))) {
                 $core_conf->addSipNotify('generic-reload', array('Event' => 'check-sync\;reboot=false', 'Content-Length' => '0'));
             }
+            /* Add inboundlookup agi for each inbound routes*/
+            $dids = core_did_list();
+            if (!empty($dids)) {
+                $ext->splice('macro-user-callerid', 's','cnum', new ext_gotoif('$["${CDR(cnam)}" != ""]', 'cnum'),"",-2);
+                foreach($dids as $did) {
+                    $exten = trim($did['extension']);
+                    $cidnum = trim($did['cidnum']);
+                    if ($cidnum != '' && $exten == '') {
+                        $exten = 's';
+                        $pricid = ($did['pricid']) ? true:false;
+                    } else if (($cidnum != '' && $exten != '') || ($cidnum == '' && $exten == '')) {
+                        $pricid = true;
+                    } else {
+                        $pricid = false;
+                    }
+                    $context = ($pricid) ? "ext-did-0001":"ext-did-0002";
+                    if (function_exists('empty_freepbx')) {
+                        $exten = (empty_freepbx($exten)?"s":$exten);
+                    } else {
+                        $exten = (empty($exten)?"s":$exten);
+                    }
+                    $exten = $exten.(empty($cidnum)?"":"/".$cidnum); //if a CID num is defined, add it
+		            $ext->splice($context, $exten, 'did-cid-hook', new ext_agi('/var/lib/asterisk/agi-bin/lookup.php,in,${CALLERID(number)}'),"inbound-lookup",1);
+                    $ext->splice($context, $exten, 'inbound-lookup', new ext_setvar('__REAL_CNAM','${CDR(cnam)}'),"",1);
+                    $ext->splice($context, $exten, 'inbound-lookup', new ext_setvar('__REAL_CCOMPANY','${CDR(ccompany)}'),"",1);
+                }
+            }
+            /* Add outboundlookup to outbound routes*/
+            $routes = core_routing_list();
+            if (!empty($routes)) {
+                foreach (core_routing_list() as $route) {
+                    $routetrunks = core_routing_getroutetrunksbyid($route['route_id']);
+                    if (!empty($routetrunks)) {
+                        $ext->splice('macro-dialout-trunk', 's','customtrunk', new ext_agi('/var/lib/asterisk/agi-bin/lookup.php,out,${DIAL_NUMBER},${DB(AMPUSER/${AMPUSER}/cidname)}'),"",-4);
+                        break;
+                    }
+                }
+            }
+            /*Add name resolution between extensions*/
+            $userlist = core_users_list();
+            if (is_array($userlist)) {
+                foreach($userlist as $item) {
+                    $exten = \FreePBX::Core()->getUser($item[0]);
+                    $ext->splice('ext-local', $exten['extension'], '', new ext_set('CDR(cnam)','${IF($["${CDR(cnam)}" = ""]?${DB(AMPUSER/${AMPUSER}/cidname)}:${CDR(cnam)})}'));
+                    $ext->splice('ext-local', $exten['extension'], '', new ext_set('AMPUSER','${IF($["${AMPUSER}" = ""]?${CALLERID(number)}:${AMPUSER})}'));
+                    $ext->splice('ext-local', $exten['extension'], '', new ext_set('CDR(dst_cnam)','${DB(AMPUSER/'.$exten['extension'].'/cidname)}'));
+                }
+            }
+            /* ADD lookup for queue agent calls */
+		    if (function_exists('queues_list') and count(queues_list(true)) > 0 ) {
+                $sql = "SELECT LENGTH(extension) as len FROM users GROUP BY len";
+                $sth = FreePBX::Database()->prepare($sql);
+                $sth->execute();
+                $rows = $sth->fetchAll(\PDO::FETCH_ASSOC);
+                foreach($rows as $row) {
+                    $ext->splice("from-queue-exten-only", '_'.str_repeat('X',$row['len']), 'checkrecord', new ext_set('CDR(cnum)','${CALLERID(num)}'),"cnum");
+                    $ext->splice("from-queue-exten-only", '_'.str_repeat('X',$row['len']), 'checkrecord', new ext_set('CDR(cnam)','${REAL_CNAM}'),"cnam");
+                    $ext->splice("from-queue-exten-only", '_'.str_repeat('X',$row['len']), 'checkrecord', new ext_set('CDR(ccompany)','${REAL_CCOMPANY}'),"ccompany");
+                }
+		    }
         break;
     }
 }
