@@ -214,28 +214,28 @@ function nethcti3_get_config_late($engine) {
                 $ext->splice("from-queue-exten-only", '_'.str_repeat('X',$row['len']), 'checkrecord', new ext_set('CDR(ccompany)','${REAL_CCOMPANY}'),"ccompany");
             }
         }
-                    /*Off-Hour*/
-                    $routes = FreePBX::Core()->getAllDIDs();
-                    foreach ($routes as $did) {
-                        /*add off-hour agi for each inbound routes*/
-                        if($did['extension'] && $did['cidnum'])
-                            $exten = $did['extension']."/".$did['cidnum'];
-                        else if (!$did['extension'] && $did['cidnum'])
-                            $exten = "s/".$did['cidnum'];
-                        else if ($did['extension'] && !$did['cidnum'])
-                            $exten = $did['extension'];
-                        else if (!$did['extension'] && !$did['cidnum'])
-                            $exten = "s";
-        
-                        if (($did['cidnum'] != '' && $did['extension'] != '') || ($did['cidnum'] == '' && $did['extension'] == '')) {
-                            $pricid = true;
-                        } else {
-                            $pricid = false;
-                        }
-                        $context = ($pricid) ? "ext-did-0001":"ext-did-0002";
-                        $ext->splice($context, $exten, "did-cid-hook", new ext_userevent('CallIn', 'value: ${FROM_DID}'),'cti-event',2);
-                        $ext->splice($context, $exten, "did-cid-hook", new ext_agi('offhour.php,'.$did['cidnum'].','.$did['extension']),'offhour',3);
-                    }
+        /*Off-Hour*/
+        $routes = FreePBX::Core()->getAllDIDs();
+        foreach ($routes as $did) {
+            /*add off-hour agi for each inbound routes*/
+            if($did['extension'] && $did['cidnum'])
+                $exten = $did['extension']."/".$did['cidnum'];
+            else if (!$did['extension'] && $did['cidnum'])
+                $exten = "s/".$did['cidnum'];
+            else if ($did['extension'] && !$did['cidnum'])
+                $exten = $did['extension'];
+            else if (!$did['extension'] && !$did['cidnum'])
+                $exten = "s";
+
+            if (($did['cidnum'] != '' && $did['extension'] != '') || ($did['cidnum'] == '' && $did['extension'] == '')) {
+                $pricid = true;
+            } else {
+                $pricid = false;
+            }
+            $context = ($pricid) ? "ext-did-0001":"ext-did-0002";
+            $ext->splice($context, $exten, "did-cid-hook", new ext_userevent('CallIn', 'value: ${FROM_DID}'),'cti-event',2);
+            $ext->splice($context, $exten, "did-cid-hook", new ext_agi('offhour.php,'.$did['cidnum'].','.$did['extension']),'offhour',3);            
+        }
         break;
     }
 
