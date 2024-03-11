@@ -234,7 +234,7 @@ function nethcti3_get_config_late($engine) {
             }
             $context = ($pricid) ? "ext-did-0001":"ext-did-0002";
             $ext->splice($context, $exten, "did-cid-hook", new ext_userevent('CallIn', 'value: ${FROM_DID}'),'cti-event',2);
-            $ext->splice($context, $exten, "did-cid-hook", new ext_agi('offhour.php,'.$did['cidnum'].','.$did['extension']),'offhour',3);            
+            $ext->splice($context, $exten, "did-cid-hook", new ext_agi('offhour.php,'.$did['cidnum'].','.$did['extension']),'offhour',3);
         }
         break;
     }
@@ -297,7 +297,7 @@ function nethcti3_get_config_late($engine) {
                                     $settings['web_password'] = 'admin';
                                 }
                                 $settings['mac'] = $e['mac'];
-                            } else if ($e['type'] === 'webrtc' || $e['type'] === 'mobile') {
+                            } else if ($e['type'] === 'webrtc' || $e['type'] === 'mobile' || $e['type'] === 'nethlink') {
                                 // Retrieve webrtc sip credentials
                                 $stmt = $dbh->prepare('SELECT data FROM sip WHERE keyword IN ("account", "secret") AND id = ?');
                                 $stmt->execute(array($e['extension']));
